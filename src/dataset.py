@@ -84,17 +84,18 @@ class CIFAR10DataModule(pl.LightningDataModule):
         self.ds_train_all_classes = CIFAR10(BASE_DIR.joinpath('data/cifar'), train=True, transform=self.train_transform)
         self.ds_val_all_classes = CIFAR10(BASE_DIR.joinpath('data/cifar'), train=False, transform=self.val_transform)
         
-        train_inital_classes = [i for i, (_, label) in enumerate(self.ds_train_all_classes) if label in selected_classes_to_train]
-        val_inital_classes = [i for i, (_, label) in enumerate(self.ds_val_all_classes) if label in selected_classes_to_train]
+        #find indices of selected classes
+        train_inital_classes_indices = [i for i, (_, label) in enumerate(self.ds_train_all_classes) if label in selected_classes_to_train]
+        val_inital_classes_indices = [i for i, (_, label) in enumerate(self.ds_val_all_classes) if label in selected_classes_to_train]
         
-        self.ds_train = torch.utils.data.Subset(self.ds_train_all_classes, train_inital_classes)
-        self.ds_val = torch.utils.data.Subset(self.ds_val_all_classes, val_inital_classes)
+        self.train_inital_classes = torch.utils.data.Subset(self.ds_train_all_classes, train_inital_classes_indices)
+        self.val_inital_classes = torch.utils.data.Subset(self.ds_val_all_classes, val_inital_classes_indices)
 
         # to check if we really just use 0-5 class
-        print("Train labels:", sorted(set([self.ds_train_all_classes.targets[i] for i in train_inital_classes])))
-        print("Val labels:", sorted(set([self.ds_val_all_classes.targets[i] for i in val_inital_classes])))
-        print("Train size:", len(self.ds_train))
-        print("Val size:", len(self.ds_val))
+        print("Train labels:", sorted(set([self.ds_train_all_classes.targets[i] for i in train_inital_classes_indices])))
+        print("Val labels:", sorted(set([self.ds_val_all_classes.targets[i] for i in val_inital_classes_indices])))
+        print("Train size:", len(self.train_inital_classes))
+        print("Val size:", len(self.val_inital_classes))
 
     def train_dataloader(self):
         """Create dataloader for training"""
@@ -103,7 +104,7 @@ class CIFAR10DataModule(pl.LightningDataModule):
 
     def val_dataloader(self):
         """Create dataloader for validation"""
-        return DataLoader(self.ds_val, batch_size=self.val_batch_size)
+        return DataLoader(self.val_inital_classes, batch_size=self.val_batch_size)
 
     @property
     def classes(self):
