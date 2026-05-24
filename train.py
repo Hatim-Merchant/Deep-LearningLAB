@@ -12,7 +12,7 @@ LIGHTNING_DIR = BASE_DIR.joinpath("data/lightning")
 MODELS_DIR = LIGHTNING_DIR.joinpath("models")
 
 LOG_EVERY_N_STEPS = 50
-MAX_EPOCHS = 1 #200
+MAX_EPOCHS = 2 #200
 
 BATCH_SIZE = 512  # 512
 VAL_BATCH_SIZE = 512
@@ -69,6 +69,6 @@ if __name__ == '__main__':
         log_every_n_steps=LOG_EVERY_N_STEPS,
         max_epochs=MAX_EPOCHS,
         callbacks=[checkpoint_callback, es, lr_monitor],
-        #resume_from_checkpoint=MODELS_DIR.joinpath("last.ckpt")
+        resume_from_checkpoint=MODELS_DIR.joinpath("last.ckpt")
     )
     trainer.fit(model, data)

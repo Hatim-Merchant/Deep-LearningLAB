@@ -80,13 +80,13 @@ class CIFAR10DataModule(pl.LightningDataModule):
 
     def setup(self, stage: str) -> None:
         """Initialize train and validation datasets"""
-        self.ds_train = CIFAR10(BASE_DIR.joinpath('data/cifar'), train=True, transform=self.train_transform)
+        self.ds_train_all_classes = CIFAR10(BASE_DIR.joinpath('data/cifar'), train=True, transform=self.train_transform)
         self.ds_val = CIFAR10(BASE_DIR.joinpath('data/cifar'), train=False, transform=self.val_transform)
 
     def train_dataloader(self):
         """Create dataloader for training"""
         # Due to small dataset we don't need to use multiprocessing
-        return DataLoader(self.ds_train, batch_size=self.batch_size, shuffle=True)
+        return DataLoader(self.ds_train_all_classes, batch_size=self.batch_size, shuffle=True)
 
     def val_dataloader(self):
         """Create dataloader for validation"""
