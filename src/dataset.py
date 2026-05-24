@@ -80,13 +80,26 @@ class CIFAR10DataModule(pl.LightningDataModule):
 
     def setup(self, stage: str) -> None:
         """Initialize train and validation datasets"""
+        selected_classes_to_train = [0, 1, 2, 3, 4] #use this classes for intial training and later for CL other classes
         self.ds_train_all_classes = CIFAR10(BASE_DIR.joinpath('data/cifar'), train=True, transform=self.train_transform)
-        self.ds_val = CIFAR10(BASE_DIR.joinpath('data/cifar'), train=False, transform=self.val_transform)
+        self.ds_val_all_classes = CIFAR10(BASE_DIR.joinpath('data/cifar'), train=False, transform=self.val_transform)
+        
+        train_inital_classes = [i for i, (_, label) in enumerate(self.ds_train_all_classes) if label in selected_classes_to_train]
+        val_inital_classes = [i for i, (_, label) in enumerate(self.ds_val_all_classes) if label in selected_classes_to_train]
+        
+        self.ds_train = torch.utils.data.Subset(self.ds_train_all_classes, train_inital_classes)
+        self.ds_val = torch.utils.data.Subset(self.ds_val_all_classes, val_inital_classes)
+
+        # to check if we really just use 0-5 class
+        print("Train labels:", sorted(set([self.ds_train_all_classes.targets[i] for i in train_inital_classes])))
+        print("Val labels:", sorted(set([self.ds_val_all_classes.targets[i] for i in val_inital_classes])))
+        print("Train size:", len(self.ds_train))
+        print("Val size:", len(self.ds_val))
 
     def train_dataloader(self):
         """Create dataloader for training"""
         # Due to small dataset we don't need to use multiprocessing
-        return DataLoader(self.ds_train_all_classes, batch_size=self.batch_size, shuffle=True)
+        return DataLoader(self.train_inital_classes, batch_size=self.batch_size, shuffle=True)  
 
     def val_dataloader(self):
         """Create dataloader for validation"""
