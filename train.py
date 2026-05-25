@@ -1,3 +1,4 @@
+import time
 import torch
 from torch import nn, optim
 
@@ -49,10 +50,14 @@ class Trainer:
         """
         # Keep track of the losses and accuracies
         train_losses, test_losses, accuracies = [], [], []
+	# Start the overall session timer
+        total_start_time = time.time()
         # Train the model
         for i in range(epochs):
+            start_time = time.time()
             train_loss = self.train_epoch(trainloader)
             accuracy, test_loss = self.evaluate(testloader)
+            epoch_time = time.time() - start_time
             train_losses.append(train_loss)
             test_losses.append(test_loss)
             accuracies.append(accuracy)
@@ -60,6 +65,15 @@ class Trainer:
             if save_model_every_n_epochs > 0 and (i+1) % save_model_every_n_epochs == 0 and i+1 != epochs:
                 print('\tSave checkpoint at epoch', i+1)
                 save_checkpoint(self.exp_name, self.model, i+1)
+	# Calculate the total elapsed time
+        total_duration = time.time() - total_start_time
+	# Format the total time into minutes and seconds for better readability
+        minutes = int(total_duration // 60)
+        seconds = int(total_duration % 60)
+        
+        print("-" * 50)
+        print(f"Training Complete! Total Session Time: {minutes}m {seconds}s ({total_duration:.2f} seconds)")
+        print("-" * 50)
         # Save the experiment
         save_experiment(self.exp_name, config, self.model, train_losses, test_losses, accuracies)
 
