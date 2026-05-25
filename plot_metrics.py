@@ -70,3 +70,6 @@ def plot_vit_metrics(input_dir):
 if __name__ == "__main__":
     # Plot for the 100 epochs run
     plot_vit_metrics('ViT_100_Epochs')
+    
+    # Plot for the 60 epochs run
+    plot_vit_metrics('ViT_60_Epochs')
