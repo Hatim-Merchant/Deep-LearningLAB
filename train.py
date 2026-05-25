@@ -5,6 +5,10 @@ from utils import save_experiment, save_checkpoint
 from data import prepare_data
 from vit import ViTForClassfication
 
+# Configuration for continual learning experiment
+# First 5 classes of CIFAR10: plane (0), car (1), bird (2), cat (3), deer (4)
+# Remaining 5 classes for later: dog (5), frog (6), horse (7), ship (8), truck (9)
+FIRST_5_CLASSES = [0, 1, 2, 3, 4]
 
 config = {
     "patch_size": 4,  # Input image size: 32x32 -> 8x8 patches
@@ -16,7 +20,7 @@ config = {
     "attention_probs_dropout_prob": 0.0,
     "initializer_range": 0.02,
     "image_size": 32,
-    "num_classes": 10, # num_classes of CIFAR10
+    "num_classes": 5, # num_classes of CIFAR10
     "num_channels": 3,
     "qkv_bias": True,
     "use_faster_attention": True,
@@ -52,7 +56,7 @@ class Trainer:
             train_losses.append(train_loss)
             test_losses.append(test_loss)
             accuracies.append(accuracy)
-            print(f"Epoch: {i+1}, Train loss: {train_loss:.4f}, Test loss: {test_loss:.4f}, Accuracy: {accuracy:.4f}")
+            print(f"Epoch: {i+1}, Train loss: {train_loss:.4f}, Test loss: {test_loss:.4f}, Accuracy: {accuracy:.4f}, Time: {epoch_time:.2f}s")
             if save_model_every_n_epochs > 0 and (i+1) % save_model_every_n_epochs == 0 and i+1 != epochs:
                 print('\tSave checkpoint at epoch', i+1)
                 save_checkpoint(self.exp_name, self.model, i+1)
@@ -131,7 +135,15 @@ def main():
     device = args.device
     save_model_every_n_epochs = args.save_model_every
     # Load the CIFAR10 dataset
-    trainloader, testloader, _ = prepare_data(batch_size=batch_size)
+    #trainloader, testloader, _ = prepare_data(batch_size=batch_size)
+    # Load the CIFAR10 dataset (first 5 classes only for continual learning setup)
+    trainloader, testloader, classes = prepare_data(
+        batch_size=batch_size,
+        classes_to_keep=FIRST_5_CLASSES
+    )
+    print(f"Training on CIFAR10 classes: {classes}")
+    print(f"Number of training samples: {len(trainloader.dataset)}")
+    print(f"Number of test samples: {len(testloader.dataset)}")
     # Create the model, optimizer, loss function and trainer
     model = ViTForClassfication(config)
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-2)
