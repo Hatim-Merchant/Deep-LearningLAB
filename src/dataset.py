@@ -91,7 +91,7 @@ class CIFAR10DataModule(pl.LightningDataModule):
         self.train_inital_classes = torch.utils.data.Subset(self.ds_train_all_classes, train_inital_classes_indices)
         self.val_inital_classes = torch.utils.data.Subset(self.ds_val_all_classes, val_inital_classes_indices)
 
-        # to check if we really just use 0-5 class
+        # to check if we really just use 0-5 class, prints can be deleted later
         print("Train labels:", sorted(set([self.ds_train_all_classes.targets[i] for i in train_inital_classes_indices])))
         print("Val labels:", sorted(set([self.ds_val_all_classes.targets[i] for i in val_inital_classes_indices])))
         print("Train size:", len(self.train_inital_classes))

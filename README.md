@@ -1,10 +1,10 @@
-# Build and Train Vision Transformer from Scratch
+# Deep-LearningLAB
 
-![logo](.docs/logo.jpeg)
+Branch `first-repo` implements the Vision Transformer from:
+https://towardsai.net/p/l/build-and-train-vision-transformer-from-scratch
 
-This is the supplementary repository for the tutorial
-
-[Build and Train Vision Transformer from Scratch](https://medium.com/@michkravets/build-and-train-vision-transformer-from-scratch-f206c065bdf8)
+Original repository/tutorial:
+https://github.com/MikhailKravets/vision_transformer
 
 ## Install
 
