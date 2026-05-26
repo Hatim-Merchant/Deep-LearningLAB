@@ -1,7 +1,7 @@
 numpy
 pandas
-torch==1.13.1
-torchvision
-tensorboard
+torch==2.7.1
+torchvision==0.22.1tensorboard
 pytorch-lightning==1.9.4
-matplotlib
+matplotlib==3.10.9
+

@@ -35,6 +35,17 @@ class PatchifyTransform:
 
         return res.reshape(-1, self.patch_size * self.patch_size * 3)  # -1 x 48 == 64 x 48
 
+class RemappedSubset(torch.utils.data.Dataset):
+    def __init__(self, dataset, indices, remap=None):
+        self.subset = torch.utils.data.Subset(dataset, indices)
+        self.remap = remap
+
+    def __len__(self):
+        return len(self.subset)
+
+    def __getitem__(self, idx):
+        image, label = self.subset[idx]
+        return image, self.remap[label] if self.remap else label
 
 class CIFAR10DataModule(pl.LightningDataModule):
 
@@ -49,6 +60,8 @@ class CIFAR10DataModule(pl.LightningDataModule):
         """
         super().__init__()
 
+        self.selected_classes_to_train = [2, 3, 4]
+        self.use_remapping = True  # Remap selected CIFAR labels, e.g. [2, 3, 4] -> [0, 1, 2]        
         self.batch_size = batch_size
         self.val_batch_size = val_batch_size
         self.train_transform = transforms.Compose(
@@ -70,8 +83,8 @@ class CIFAR10DataModule(pl.LightningDataModule):
             ]
         )
         self.patch_size = patch_size
-        self.ds_train = None
-        self.ds_val = None
+        self.train_initial_classes  = None
+        self.val_initial_classes = None
 
     def prepare_data(self) -> None:
         """Download CIFAR10 dataset into local directory"""
@@ -80,33 +93,31 @@ class CIFAR10DataModule(pl.LightningDataModule):
 
     def setup(self, stage: str) -> None:
         """Initialize train and validation datasets"""
-        selected_classes_to_train = [0, 1, 2, 3, 4] #use this classes for intial training and later for CL other classes
+
+        label_remap = {original: new for new, original in enumerate(self.selected_classes_to_train)} if self.use_remapping else None
+
         self.ds_train_all_classes = CIFAR10(BASE_DIR.joinpath('data/cifar'), train=True, transform=self.train_transform)
         self.ds_val_all_classes = CIFAR10(BASE_DIR.joinpath('data/cifar'), train=False, transform=self.val_transform)
-        
-        #find indices of selected classes
-        train_inital_classes_indices = [i for i, (_, label) in enumerate(self.ds_train_all_classes) if label in selected_classes_to_train]
-        val_inital_classes_indices = [i for i, (_, label) in enumerate(self.ds_val_all_classes) if label in selected_classes_to_train]
-        
-        self.train_inital_classes = torch.utils.data.Subset(self.ds_train_all_classes, train_inital_classes_indices)
-        self.val_inital_classes = torch.utils.data.Subset(self.ds_val_all_classes, val_inital_classes_indices)
 
-        # to check if we really just use 0-5 class, prints can be deleted later
-        print("Train labels:", sorted(set([self.ds_train_all_classes.targets[i] for i in train_inital_classes_indices])))
-        print("Val labels:", sorted(set([self.ds_val_all_classes.targets[i] for i in val_inital_classes_indices])))
-        print("Train size:", len(self.train_inital_classes))
-        print("Val size:", len(self.val_inital_classes))
+        train_initial_classes_indices = [i for i, (_, label) in enumerate(self.ds_train_all_classes) if label in self.selected_classes_to_train]
+        val_initial_classes_indices = [i for i, (_, label) in enumerate(self.ds_val_all_classes) if label in self.selected_classes_to_train]
+
+        self.train_initial_classes = RemappedSubset(self.ds_train_all_classes, train_initial_classes_indices, label_remap)
+        self.val_initial_classes = RemappedSubset(self.ds_val_all_classes, val_initial_classes_indices, label_remap)
+
+        print("Train size:", len(self.train_initial_classes))
+        print("Val size:", len(self.val_initial_classes))
 
     def train_dataloader(self):
         """Create dataloader for training"""
         # Due to small dataset we don't need to use multiprocessing
-        return DataLoader(self.train_inital_classes, batch_size=self.batch_size, shuffle=True)  
+        return DataLoader(self.train_initial_classes, batch_size=self.batch_size, shuffle=True)  
 
     def val_dataloader(self):
         """Create dataloader for validation"""
-        return DataLoader(self.val_inital_classes, batch_size=self.val_batch_size)
+        return DataLoader(self.val_initial_classes, batch_size=self.val_batch_size)
 
     @property
     def classes(self):
-        """Returns the amount of CIFAR10 classes"""
-        return 10  # CIFAR10 has 10 possible classes
+        """Returns the number of selected classes."""
+        return len(self.selected_classes_to_train)  # CIFAR10 has 10 possible classes
