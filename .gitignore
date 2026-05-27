@@ -2,9 +2,7 @@ experiments/**/checkpoints/
 experiments/**/*.ckpt
 experiments/**/*.pt
 experiments/**/*.pth
-venv/
-__pycache__/
-.venv/
+
 .data/
 data/
 # Created by https://www.toptal.com/developers/gitignore/api/python,pycharm+all
