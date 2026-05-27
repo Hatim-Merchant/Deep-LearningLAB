@@ -1,17 +1,25 @@
 {
     "exp_name": "vit_cifar10",
-    "batch_size": 526,
+    "batch_size": 128,
     "lr": 0.001,
-    "epochs": 1,
+    "epochs": 100,
     "patch_size": 4,
     "size": 48,
-    "hidden_size": 512,
+    "hidden_size": 48,
     "num_patches": 64,
     "num_heads": 8,
     "num_encoders": 6,
     "dropout": 0.1,
     "emb_dropout": 0.1,
     "weight_decay": 1e-06,
-    "num_classes": 3,
+    "num_classes": 5,
+    "selected_classes_to_train": [
+        0,
+        1,
+        2,
+        3,
+        4
+    ],
+    "use_remapping": true,
     "accelerator": "cpu"
 }

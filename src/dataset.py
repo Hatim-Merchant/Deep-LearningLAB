@@ -60,7 +60,7 @@ class CIFAR10DataModule(pl.LightningDataModule):
         """
         super().__init__()
 
-        self.selected_classes_to_train = [2, 3, 4]
+        self.selected_classes_to_train = [0,1,2,3,4]
         self.use_remapping = True  # Remap selected CIFAR labels, e.g. [2, 3, 4] -> [0, 1, 2]        
         self.batch_size = batch_size
         self.val_batch_size = val_batch_size

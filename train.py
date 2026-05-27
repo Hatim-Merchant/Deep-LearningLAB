@@ -16,7 +16,7 @@ LOG_EVERY_N_STEPS = 50
 
 PATCH_SIZE = 4
 SIZE = PATCH_SIZE * PATCH_SIZE * 3  # CIFAR10 RGB patches
-HIDDEN_SIZE = 512
+HIDDEN_SIZE = 48
 NUM_PATCHES = int(32 * 32 / PATCH_SIZE ** 2)
 
 NUM_HEADS = 8
@@ -78,6 +78,8 @@ if __name__ == "__main__":
         "emb_dropout": EMB_DROPOUT,
         "weight_decay": WEIGHT_DECAY,
         "num_classes": data.classes,
+        "selected_classes_to_train": data.selected_classes_to_train,
+        "use_remapping": data.use_remapping,
         "accelerator": "gpu" if torch.cuda.is_available() else "cpu",
     }
 

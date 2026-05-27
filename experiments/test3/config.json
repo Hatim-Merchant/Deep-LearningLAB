@@ -12,6 +12,14 @@
     "dropout": 0.1,
     "emb_dropout": 0.1,
     "weight_decay": 1e-06,
-    "num_classes": 3,
+    "num_classes": 5,
+    "selected_classes_to_train": [
+        0,
+        1,
+        2,
+        3,
+        4
+    ],
+    "use_remapping": true,
     "accelerator": "cpu"
 }
