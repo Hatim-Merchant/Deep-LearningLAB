@@ -5,6 +5,8 @@ import pytorch_lightning as pl
 from torch import nn
 from torch.optim import AdamW, lr_scheduler
 
+import json
+from pathlib import Path
 
 def logit_accuracy(logits: torch.Tensor, target: torch.Tensor) -> float:
     """Calculate how much classes in logits were correctly
@@ -195,6 +197,15 @@ class ViT(pl.LightningModule):
             *[Encoder(hidden_size, num_heads, dropout=dropout) for _ in range(num_encoders)],
         )
         self.mlp_head = nn.Linear(hidden_size, num_classes)
+        self.train_losses = []
+        self.val_losses = []
+        self.accuracies = []
+
+        self.current_train_losses = []
+        self.current_val_losses = []
+        self.current_val_accuracies = []
+
+        self.metrics_path = Path("metrics.json")
 
     def forward(self, input_tensor: torch.Tensor) -> torch.Tensor:
         emb = self.embedding(input_tensor)
@@ -222,6 +233,8 @@ class ViT(pl.LightningModule):
             self.log("train_acc", logit_accuracy(logits, target), prog_bar=True)
 
         self.log("train_loss", loss)
+        self.current_train_losses.append(loss.detach().item())
+
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -238,11 +251,50 @@ class ViT(pl.LightningModule):
         output = self(input_batch)
 
         loss = F.cross_entropy(output, target)
+        accuracy = logit_accuracy(output, target)
 
         self.log("val_loss", loss, prog_bar=True)
-        self.log("val_accuracy", logit_accuracy(output, target), prog_bar=True)
+        self.log("val_accuracy", accuracy, prog_bar=True)
+
+        self.current_val_losses.append(loss.detach().item())        
+        self.current_val_accuracies.append(accuracy.detach().item()) 
 
         return loss
+    
+    def on_train_epoch_end(self):                                    
+        if self.current_train_losses:
+            self.train_losses.append(
+                sum(self.current_train_losses) / len(self.current_train_losses)
+            )
+            self.current_train_losses.clear()
+
+    def on_validation_epoch_end(self):  
+        if self.trainer.sanity_checking:
+            self.current_val_losses.clear()    
+            self.current_val_accuracies.clear()     
+            return                   
+        if self.current_val_losses:
+            self.val_losses.append(
+                sum(self.current_val_losses) / len(self.current_val_losses)
+            )
+            self.current_val_losses.clear()
+
+        if self.current_val_accuracies:
+            self.accuracies.append(
+                sum(self.current_val_accuracies) / len(self.current_val_accuracies)
+            )
+            self.current_val_accuracies.clear()
+
+        self._save_metrics()
+
+    def _save_metrics(self):                                         
+        metrics = {
+            "train_loss":    self.train_losses,
+            "val_loss":      self.val_losses,
+            "val_accuracy":  self.accuracies,
+        }
+        with open(self.metrics_path, "w") as f:
+            json.dump(metrics, f, indent=2)
 
     def configure_optimizers(self):
         """Configure optimizers and learning rate scheduler

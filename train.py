@@ -14,7 +14,6 @@ LIGHTNING_DIR = BASE_DIR.joinpath("data/lightning")
 MODELS_DIR = LIGHTNING_DIR.joinpath("models")
 
 LOG_EVERY_N_STEPS = 50
-MAX_EPOCHS = 200 #200
 
 PATCH_SIZE = 4
 SIZE = PATCH_SIZE * PATCH_SIZE * 3  # CIFAR10 RGB patches
