@@ -7,10 +7,11 @@ from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, Learning
 
 from src.dataset import CIFAR10DataModule
 from src.models.basic import ViT
-from src.experiment_utils import create_experiment_dir, save_json
-from src.metrics import MetricsCallback
+
 
 BASE_DIR = Path(__file__).parent
+LIGHTNING_DIR = BASE_DIR.joinpath("data/lightning")
+MODELS_DIR = LIGHTNING_DIR.joinpath("models")
 
 LOG_EVERY_N_STEPS = 50
 
@@ -47,41 +48,11 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
 
-    paths = create_experiment_dir(BASE_DIR / "experiments")
-
-    RUN_DIR = paths["run_dir"]
-    CHECKPOINT_DIR = paths["checkpoint_dir"]
-    LIGHTNING_DIR = paths["lightning_dir"]
-    CONFIG_PATH = paths["config_path"]
-    MODEL_PATH = paths["model_path"]
-    LAST_CHECKPOINT_PATH = paths["last_checkpoint_path"]
-    METRICS_PATH = paths["metrics_path"]
-
     data = CIFAR10DataModule(
         batch_size=args.batch_size,
         val_batch_size=args.batch_size,
         patch_size=PATCH_SIZE
     )
-
-    config = {
-        "exp_name": args.exp_name,
-        "batch_size": args.batch_size,
-        "lr": args.lr,
-        "epochs": args.epochs,
-        "patch_size": PATCH_SIZE,
-        "size": SIZE,
-        "hidden_size": HIDDEN_SIZE,
-        "num_patches": NUM_PATCHES,
-        "num_heads": NUM_HEADS,
-        "num_encoders": NUM_ENCODERS,
-        "dropout": DROPOUT,
-        "emb_dropout": EMB_DROPOUT,
-        "weight_decay": WEIGHT_DECAY,
-        "num_classes": data.classes,
-        "accelerator": "gpu" if torch.cuda.is_available() else "cpu",
-    }
-
-    save_json(config, CONFIG_PATH)
 
     model = ViT(
         size=SIZE,
@@ -96,21 +67,50 @@ if __name__ == "__main__":
         weight_decay=WEIGHT_DECAY,
         epochs=args.epochs
     )
+    # create config.json
+    import json
 
+    config = {
+        "hidden_size": model.hparams.hidden_size,
+        "num_attention_heads": model.hparams.num_heads,
+        "num_hidden_layers": model.hparams.num_encoders,
+        "patch_size": PATCH_SIZE,
+
+        "image_size": 32,
+        "num_channels": 3,
+        "num_classes": data.classes,
+
+        "hidden_dropout_prob": DROPOUT,
+        "attention_probs_dropout_prob": DROPOUT,
+
+        "qkv_bias": True,
+
+        "intermediate_size": 4 * model.hparams.hidden_size,
+
+        "learning_rate": model.hparams.lr,
+        "weight_decay": model.hparams.weight_decay,
+
+        "batch_size": args.batch_size,
+        "epochs": args.epochs,
+
+        "use_remapping": data.use_remapping,
+        "selected_classes": data.selected_classes_to_train
+    }
+
+    with open(BASE_DIR / "config.json", "w") as f:
+        json.dump(config, f, indent=4)
+        
     checkpoint_callback = ModelCheckpoint(
-        dirpath=CHECKPOINT_DIR,
-        filename="{epoch:02d}-{val_loss:.4f}",
+        dirpath=MODELS_DIR,
         monitor="val_loss",
         save_last=True,
-        mode="min",
         save_top_k=3,
         verbose=True
     )
 
     callbacks = [
         checkpoint_callback,
-        LearningRateMonitor(logging_interval="epoch"),
-        MetricsCallback(METRICS_PATH),
+        LearningRateMonitor(logging_interval="epoch")
     ]
 
     if not args.no_early_stopping:
@@ -133,10 +133,8 @@ if __name__ == "__main__":
 
     ckpt_path = None
     if args.resume:
-        ckpt_path = LAST_CHECKPOINT_PATH
+        ckpt_path = MODELS_DIR / "last.ckpt"
 
     trainer.fit(model, data, ckpt_path=ckpt_path)
-    torch.save(model.state_dict(), MODEL_PATH)
-
-    print(f"Final model saved to: {MODEL_PATH}")
-    print(f"Checkpoints saved to: {CHECKPOINT_DIR}")
+    torch.save(model.state_dict(), MODELS_DIR / "model_final.pt")
+    print("Model saved.")
