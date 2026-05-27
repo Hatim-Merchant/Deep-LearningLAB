@@ -67,7 +67,39 @@ if __name__ == "__main__":
         weight_decay=WEIGHT_DECAY,
         epochs=args.epochs
     )
+    # create config.json
+    import json
 
+    config = {
+        "hidden_size": model.hparams.hidden_size,
+        "num_attention_heads": model.hparams.num_heads,
+        "num_hidden_layers": model.hparams.num_encoders,
+        "patch_size": PATCH_SIZE,
+
+        "image_size": 32,
+        "num_channels": 3,
+        "num_classes": data.classes,
+
+        "hidden_dropout_prob": DROPOUT,
+        "attention_probs_dropout_prob": DROPOUT,
+
+        "qkv_bias": True,
+
+        "intermediate_size": 4 * model.hparams.hidden_size,
+
+        "learning_rate": model.hparams.lr,
+        "weight_decay": model.hparams.weight_decay,
+
+        "batch_size": args.batch_size,
+        "epochs": args.epochs,
+
+        "use_remapping": data.use_remapping,
+        "selected_classes": data.selected_classes_to_train
+    }
+
+    with open(BASE_DIR / "config.json", "w") as f:
+        json.dump(config, f, indent=4)
+        
     checkpoint_callback = ModelCheckpoint(
         dirpath=MODELS_DIR,
         monitor="val_loss",
