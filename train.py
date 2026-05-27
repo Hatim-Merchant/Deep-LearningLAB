@@ -136,3 +136,5 @@ if __name__ == "__main__":
         ckpt_path = MODELS_DIR / "last.ckpt"
 
     trainer.fit(model, data, ckpt_path=ckpt_path)
+    torch.save(model.state_dict(), MODELS_DIR / "model_final.pt")
+    print("Model saved.")
