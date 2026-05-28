@@ -50,7 +50,7 @@ class Trainer:
         """
         # Keep track of the losses and accuracies
         train_losses, test_losses, accuracies = [], [], []
-	# Start the overall session timer
+        # Start the overall session timer
         total_start_time = time.time()
         # Train the model
         for i in range(epochs):
@@ -65,9 +65,10 @@ class Trainer:
             if save_model_every_n_epochs > 0 and (i+1) % save_model_every_n_epochs == 0 and i+1 != epochs:
                 print('\tSave checkpoint at epoch', i+1)
                 save_checkpoint(self.exp_name, self.model, i+1)
-	# Calculate the total elapsed time
+        # Calculate the total elapsed time
         total_duration = time.time() - total_start_time
-	# Format the total time into minutes and seconds for better readability
+
+        # Format the total time into minutes and seconds for better readability
         minutes = int(total_duration // 60)
         seconds = int(total_duration % 60)
         
@@ -148,11 +149,9 @@ def main():
     lr = args.lr
     device = args.device
     save_model_every_n_epochs = args.save_model_every
-    # Load the CIFAR10 dataset
-    #trainloader, testloader, _ = prepare_data(batch_size=batch_size)
     # Load the CIFAR10 dataset (first 5 classes only for continual learning setup)
     trainloader, testloader, classes = prepare_data(
-        batch_size=batch_size,
+        batch_size=batch_size, 
         classes_to_keep=FIRST_5_CLASSES
     )
     print(f"Training on CIFAR10 classes: {classes}")

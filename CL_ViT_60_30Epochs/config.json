@@ -1,0 +1,30 @@
+{
+    "attention_probs_dropout_prob": 0.0,
+    "hidden_dropout_prob": 0.0,
+    "hidden_size": 48,
+    "image_size": 32,
+    "initializer_range": 0.02,
+    "intermediate_size": 192,
+    "new_classes": [
+        5,
+        6,
+        7,
+        8,
+        9
+    ],
+    "num_attention_heads": 4,
+    "num_channels": 3,
+    "num_classes": 10,
+    "num_hidden_layers": 4,
+    "old_classes": [
+        0,
+        1,
+        2,
+        3,
+        4
+    ],
+    "original_num_classes": 5,
+    "patch_size": 4,
+    "qkv_bias": true,
+    "use_faster_attention": true
+}

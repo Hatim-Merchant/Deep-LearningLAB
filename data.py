@@ -44,8 +44,8 @@ class SubsetByClass(torch.utils.data.Dataset):
         return [self.dataset[i][1] for i in self.indices]
 
 
-def prepare_data(batch_size=4, num_workers=2, train_sample_size=None, test_sample_size=None, 
-                 classes_to_keep=None):
+def prepare_data(batch_size=4, num_workers=2, train_sample_size=None, test_sample_size=None,
+                 classes_to_keep=None, remap_labels=True):
     train_transform = transforms.Compose(
         [transforms.ToTensor(),
         transforms.Resize((32, 32)),
@@ -58,7 +58,7 @@ def prepare_data(batch_size=4, num_workers=2, train_sample_size=None, test_sampl
     
     # Filter by class if specified
     if classes_to_keep is not None:
-        trainset = SubsetByClass(trainset, classes_to_keep, remap_labels=True)
+        trainset = SubsetByClass(trainset, classes_to_keep, remap_labels=remap_labels)
     
     if train_sample_size is not None:
         # Randomly sample a subset of the training set
@@ -80,7 +80,7 @@ def prepare_data(batch_size=4, num_workers=2, train_sample_size=None, test_sampl
     
     # Filter by class if specified
     if classes_to_keep is not None:
-        testset = SubsetByClass(testset, classes_to_keep, remap_labels=True)
+        testset = SubsetByClass(testset, classes_to_keep, remap_labels=remap_labels)
     
     if test_sample_size is not None:
         # Randomly sample a subset of the test set
@@ -100,4 +100,3 @@ def prepare_data(batch_size=4, num_workers=2, train_sample_size=None, test_sampl
         classes = all_classes
     
     return trainloader, testloader, classes
-
