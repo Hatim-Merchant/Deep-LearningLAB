@@ -6,14 +6,21 @@ import matplotlib.pyplot as plt
 BASE_DIR = Path(__file__).parent
 EXPERIMENTS_DIR = BASE_DIR / "experiments"
 
-
+# Helper function to load JSON data
 def load_json(path):
     with open(path, "r") as f:
         return json.load(f)
 
 
 def plot_metrics(exp_name):
-    exp_dir = EXPERIMENTS_DIR / exp_name
+    """
+    Plot training metrics with two subplots for a given experiment.
+    x-axis: Epochs
+    y-axis: Validation Accuracy (left subplot) and  Train and Validation Loss (right subplot)
+    args: exp_name (str): Name of the experiment folder inside "experiments" directory. 
+                          One folder that contains "metrics.json" and "config.json". The plot will be saved as "training_overview.png" in the same folder.
+    """
+    exp_dir = EXPERIMENTS_DIR / exp_name # Path to the experiment folder, e.g., "experiments/100Epochs"
 
     metrics_path = exp_dir / "metrics.json"
     config_path = exp_dir / "config.json"
@@ -27,26 +34,31 @@ def plot_metrics(exp_name):
     if not config_path.exists():
         raise FileNotFoundError(f"config.json was not found: {config_path}")
 
+    # Load metrics and config
     metrics = load_json(metrics_path)
     config = load_json(config_path)
 
+    # Extract relevant data for plotting from metrics and config
     train_losses = metrics["train_losses"]
     val_losses = metrics["val_losses"]
     val_accuracies = metrics["val_accuracies"]
-
     epochs_config = config["epochs"]
 
+    # Determine the number of values available for each metric
     num_train_loss = len(train_losses)
     num_val_loss = len(val_losses)
     num_val_acc = len(val_accuracies)
 
+    # create epoch lists for x-axis based on the number of values available 
     epochs_loss = list(range(1, min(num_train_loss, num_val_loss) + 1))
     epochs_acc = list(range(1, num_val_acc + 1))
 
+    # For plotting, we need to ensure that the lengths of the metric lists match the epoch lists.
     train_losses_plot = train_losses[:len(epochs_loss)]
     val_losses_plot = val_losses[:len(epochs_loss)]
     val_accuracies_plot = val_accuracies[:len(epochs_acc)]
 
+    # Extract relevant config parameters for the subtitle, you can add or comment out more if needed
     #exp_title = config.get("exp_name", exp_name)
     batch_size = config.get("batch_size")
     lr = config.get("lr")
@@ -62,6 +74,7 @@ def plot_metrics(exp_name):
         f"batch_size={batch_size}, lr={lr}, "
         f"classes={selected_classes}, accelerator={accelerator}"
     )
+    
     # Combined Plot: left = Accuracy, right = Loss
     fig, axes = plt.subplots(1, 2, figsize=(16, 6))
 
