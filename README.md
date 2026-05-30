@@ -6,3 +6,4 @@ Branch: Second-ViT-tintn: ViT 2 - https://github.com/tintn/vision-transformer-fr
 Alex: Alex198464
 Hatim: Hatim-Merchant
 Lisa: Lisa807649 and st192505@uni-stuttgart.de
+
