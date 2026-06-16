@@ -98,6 +98,236 @@ def expand_model_for_new_classes(model, config, num_total_classes=10):
 
     return expanded_model, new_config
 
+def calculate_head_importance(
+    model,
+    dataloader,
+    device,
+    task_classes=None,
+    max_batches=10,
+    normalize_scores_by_layer=True,
+):
+    """
+    Compute attention-head importance scores according to Michel et al. Section 4.1.
+
+    The importance score for one attention head h is:
+
+        I_h = E_x | Att_h(x)^T * dL(x) / dAtt_h(x) |
+
+    Intuition:
+        - Att_h(x) is the output produced by head h.
+        - dL(x) / dAtt_h(x) tells us how strongly the loss reacts to this head output.
+        - A large absolute dot product means that the head has a strong influence on the loss.
+        - A small value means that the head is probably less important.
+
+    Requirements:
+        The attention module must store the per-head attention output before merging the heads:
+
+            self.context_layer_val = attention_output
+            self.context_layer_val.retain_grad()
+
+        The tensor must have shape:
+
+            [batch_size, num_attention_heads, sequence_length, attention_head_size]
+
+    Args:
+        model: ViT model whose attention modules store context_layer_val
+        dataloader: Dataloader used to estimate head importance
+        device: Device on which the model and data are located
+        task_classes: Classes of the current task; currently not needed directly
+        max_batches: Maximum number of batches used for estimating importance
+        normalize_scores_by_layer: If True, normalize head scores inside each layer by L2 norm
+
+    Returns:
+        Dictionary mapping (layer_idx, head_idx) to the corresponding importance score
+    """
+
+    # Store whether the model was originally in training mode.
+    # We restore this state at the end.
+    model_was_training = model.training
+
+    # Use eval mode to disable dropout during importance estimation.
+    # Important: eval() is okay, but torch.no_grad() must NOT be used.
+    model.eval()
+
+    # Access transformer blocks.
+    # This assumes your model structure is: model.encoder.blocks
+    blocks = model.encoder.blocks
+
+    # Read number of layers and number of heads from the model.
+    num_layers = len(blocks)
+    num_heads = blocks[0].attention.num_attention_heads
+
+    # Tensor that stores one importance value per layer and per head.
+    # Shape: [num_layers, num_heads]
+    head_importance = torch.zeros(num_layers, num_heads, device=device)
+
+    # Counts how many tokens/patches were used for averaging.
+    # In ViT, this is usually: batch_size * sequence_length.
+    total_tokens = 0
+
+    # Counts how many batches were actually processed.
+    processed_batches = 0
+
+    # Standard classification loss.
+    loss_fn = nn.CrossEntropyLoss()
+
+    # Convert task_classes once, not inside every batch.
+    # Example: task_classes = [4, 5]
+    # If labels are remapped to 0/1, then:
+    # label 0 -> class 4
+    # label 1 -> class 5
+    if task_classes is not None:
+        task_classes = torch.tensor(task_classes, device=device, dtype=torch.long)
+
+    for batch_idx, batch in enumerate(dataloader):
+        # Stop after max_batches to avoid computing importance on the full dataset.
+        # Set max_batches=None if you want to use the complete dataloader.
+        if max_batches is not None and batch_idx >= max_batches:
+            break
+
+        # Unpack batch.
+        # This assumes the dataloader returns: images, labels
+        images, labels = batch
+
+        # Move data to the correct device.
+        images = images.to(device)
+        labels = labels.to(device).long()  # Ensure labels are long for CrossEntropyLoss
+
+
+        # IMPORTANT:
+        # Use this only if the dataloader remaps task labels to 0, 1, ...
+        # and the model output has original/global class indices, e.g. 10 CIFAR-10 classes.
+        if task_classes is not None:
+            labels = task_classes[labels]
+
+        # Clear old gradients before the new backward pass.
+        model.zero_grad(set_to_none=True)
+
+        # Gradients are required because we need context_layer_val.grad.
+        # Therefore, do NOT wrap this part in torch.no_grad().
+        with torch.enable_grad():
+            outputs = model(images, output_attentions=False)
+
+            # Some models return (logits, attentions), others return logits directly.
+            # This keeps the function robust.
+            if isinstance(outputs, tuple):
+                logits = outputs[0]
+            else:
+                logits = outputs
+
+            # Compute loss for the current batch.
+            loss = loss_fn(logits, labels)
+
+            # Backward pass computes gradients for all tensors where retain_grad() was called.
+            loss.backward()
+
+        # Token count should be added once per batch, not once per layer.
+        batch_token_count = None
+
+        for layer_idx, block in enumerate(blocks):
+            attention_module = block.attention
+
+            # Check whether the attention module stored the per-head output.
+            if not hasattr(attention_module, "context_layer_val"):
+                raise RuntimeError(
+                    "context_layer_val was not found in the attention module. "
+                    "Add self.context_layer_val = attention_output inside FasterMultiHeadAttention.forward() "
+                    "directly after attention_output = torch.matmul(attention_probs, value)."
+                )
+
+            # ctx is the per-head attention output:
+            # Shape: [batch_size, num_heads, sequence_length, head_dim]
+            ctx = attention_module.context_layer_val
+
+            # grad_ctx is dL / dctx:
+            # Shape: [batch_size, num_heads, sequence_length, head_dim]
+            grad_ctx = ctx.grad
+
+            # If this is None, retain_grad() was not called or gradients were disabled.
+            if grad_ctx is None:
+                raise RuntimeError(
+                    "context_layer_val.grad is None. "
+                    "Check that retain_grad() is called on context_layer_val "
+                    "and that the forward pass is not inside torch.no_grad()."
+                )
+
+            # Safety check: for the Michel score, ctx must still contain a separate head dimension.
+            if ctx.dim() != 4:
+                raise RuntimeError(
+                    f"context_layer_val must have 4 dimensions "
+                    f"[batch, heads, tokens, head_dim], but got shape {tuple(ctx.shape)}."
+                )
+
+            # Compute the dot product between head output and its gradient.
+            #
+            # ctx and grad_ctx shape:
+            #     [batch, heads, tokens, head_dim]
+            #
+            # dot shape:
+            #     [batch, heads, tokens]
+            #
+            # For every sample, head, and token:
+            #     dot[b, h, l] = sum_d grad_ctx[b, h, l, d] * ctx[b, h, l, d]
+            dot = torch.einsum("bhld,bhld->bhl", grad_ctx, ctx)
+
+            # Take absolute value and sum over batch and tokens.
+            #
+            # dot.abs().sum(dim=(0, 2)) changes:
+            #     [batch, heads, tokens] -> [heads]
+            #
+            # The result is accumulated for this layer.
+            head_importance[layer_idx] += dot.abs().sum(dim=(0, 2)).detach()
+
+            # Count tokens once per batch.
+            if batch_token_count is None:
+                batch_size = dot.shape[0]
+                sequence_length = dot.shape[2]
+                batch_token_count = batch_size * sequence_length
+
+        # Add token count after all layers have been processed.
+        total_tokens += batch_token_count
+
+        # Count this batch as processed.
+        processed_batches += 1
+
+    # Make sure at least one batch was processed.
+    if processed_batches == 0:
+        raise RuntimeError(
+            "No batch was processed. Check the dataloader or increase max_batches."
+        )
+
+    # Make sure averaging is possible.
+    if total_tokens == 0:
+        raise RuntimeError(
+            "total_tokens is 0. Something is wrong with the attention output shape."
+        )
+
+    # Approximate the expectation E_x[...] by averaging over all seen tokens.
+    head_importance = head_importance / total_tokens
+
+    # Normalize importance scores inside each layer by L2 norm.
+    # This follows the layer-wise normalization used in Michel et al.
+    if normalize_scores_by_layer:
+        norm_by_layer = head_importance.norm(p=2, dim=1, keepdim=True)
+        head_importance = head_importance / (norm_by_layer + 1e-20)
+
+    # Convert the tensor into the dictionary format used by the rest of the code.
+    importance_scores = {}
+
+    for layer_idx in range(num_layers):
+        for head_idx in range(num_heads):
+            importance_scores[(layer_idx, head_idx)] = head_importance[
+                layer_idx, head_idx
+            ].item()
+
+    # Clear gradients after importance computation.
+    model.zero_grad(set_to_none=True)
+
+    # Restore training mode if the model was training before.
+    if model_was_training:
+        model.train()
+
+    return importance_scores
 
 def compute_attention_head_importance(model, dataloader, device, task_classes):
     """
