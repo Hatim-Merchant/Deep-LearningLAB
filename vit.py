@@ -197,6 +197,13 @@ class FasterMultiHeadAttention(nn.Module):
         attention_probs = self.attn_dropout(attention_probs)
         # Calculate the attention output
         attention_output = torch.matmul(attention_probs, value)
+        # Store the per-head attention output before the heads are merged.
+        # This tensor is needed later to compute the head importance score from Paper Are Sixteen Heads Really Better than One? (Section 4.1).
+        self.context_layer_val = attention_output
+        # Retain the gradient of this intermediate tensor after loss.backward().
+        # By default, PyTorch only keeps .grad for model parameters (weights, biases), not intermediate tensors.
+        if self.context_layer_val.requires_grad:
+            self.context_layer_val.retain_grad()
         # Resize the attention output
         # from (batch_size, num_attention_heads, sequence_length, attention_head_size)
         # To (batch_size, sequence_length, all_head_size)
