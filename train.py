@@ -6,10 +6,15 @@ from utils import save_experiment, save_checkpoint
 from data import prepare_data
 from vit import ViTForClassfication
 
-# Configuration for continual learning experiment
-# First 5 classes of CIFAR10: plane (0), car (1), bird (2), cat (3), deer (4)
-# Remaining 5 classes for later: dog (5), frog (6), horse (7), ship (8), truck (9)
-FIRST_5_CLASSES = [0, 1, 2, 3, 4]
+
+# Configuration for continual learning experiment with 5 tasks (2 classes each)
+# Task 1: plane (0), car (1)
+# Task 2: bird (2), cat (3)
+# Task 3: deer (4), dog (5)
+# Task 4: frog (6), horse (7)
+# Task 5: ship (8), truck (9)
+# Pre-train on first 2 tasks (4 classes), continual learn on remaining 3 tasks
+FIRST_4_CLASSES = [0, 1, 2, 3]  # First 2 tasks for pre-training
 
 config = {
     "patch_size": 4,  # Input image size: 32x32 -> 8x8 patches
@@ -21,7 +26,7 @@ config = {
     "attention_probs_dropout_prob": 0.0,
     "initializer_range": 0.02,
     "image_size": 32,
-    "num_classes": 5, # num_classes of CIFAR10
+    "num_classes": 4, # First 4 classes of CIFAR10 (2 tasks) for initial training
     "num_channels": 3,
     "qkv_bias": True,
     "use_faster_attention": True,
@@ -50,7 +55,7 @@ class Trainer:
         """
         # Keep track of the losses and accuracies
         train_losses, test_losses, accuracies = [], [], []
-        # Start the overall session timer
+        # 1. Start the overall session timer
         total_start_time = time.time()
         # Train the model
         for i in range(epochs):
@@ -65,10 +70,10 @@ class Trainer:
             if save_model_every_n_epochs > 0 and (i+1) % save_model_every_n_epochs == 0 and i+1 != epochs:
                 print('\tSave checkpoint at epoch', i+1)
                 save_checkpoint(self.exp_name, self.model, i+1)
-        # Calculate the total elapsed time
+        # 2. Calculate the total elapsed time
         total_duration = time.time() - total_start_time
 
-        # Format the total time into minutes and seconds for better readability
+        # 3. Format the total time into minutes and seconds for better readability
         minutes = int(total_duration // 60)
         seconds = int(total_duration % 60)
         
@@ -149,10 +154,10 @@ def main():
     lr = args.lr
     device = args.device
     save_model_every_n_epochs = args.save_model_every
-    # Load the CIFAR10 dataset (first 5 classes only for continual learning setup)
+    # Load the CIFAR10 dataset (first 4 classes = 2 tasks for continual learning setup)
     trainloader, testloader, classes = prepare_data(
-        batch_size=batch_size, 
-        classes_to_keep=FIRST_5_CLASSES
+        batch_size=batch_size,
+        classes_to_keep=FIRST_4_CLASSES
     )
     print(f"Training on CIFAR10 classes: {classes}")
     print(f"Number of training samples: {len(trainloader.dataset)}")

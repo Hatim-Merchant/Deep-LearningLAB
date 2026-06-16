@@ -64,7 +64,7 @@ def prepare_data(batch_size=4, num_workers=2, train_sample_size=None, test_sampl
         # Randomly sample a subset of the training set
         indices = torch.randperm(len(trainset))[:train_sample_size]
         trainset = torch.utils.data.Subset(trainset, indices)
-    
+
 
 
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
