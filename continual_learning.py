@@ -50,8 +50,8 @@ PRETRAINED_TASKS = [1, 2]
 PRETRAINED_CLASSES = [0, 1, 2, 3]
 
 # Continual learning tasks (remaining 3 tasks = 6 classes)
-CL_TASKS = [3, 4, 5]
-
+#CL_TASKS = [3, 4, 5] #train all remaining tasks
+CL_TASKS = [3] #just train task 3
 
 def get_classes_for_tasks(task_ids):
     """Get all class indices for a list of task IDs."""
@@ -475,26 +475,43 @@ def freeze_attention_heads_for_tasks(model, task_importance_scores, freeze_ratio
 def apply_head_freezing_mask(model, frozen_heads):
     """
     Apply masks to zero out gradients for frozen attention heads.
-    This is used for FasterMultiHeadAttention where we can't easily freeze individual heads.
+    Covers both qkv_projection AND output_projection so that frozen heads
+    are truly protected: neither their Q/K/V projections nor the output
+    path through which they contribute to the residual stream can change.
     """
     for layer_idx, block in enumerate(model.encoder.blocks):
-        if hasattr(block.attention, 'qkv_projection'):
-            # Create a gradient mask for this layer
-            num_heads = block.attention.num_attention_heads
-            head_size = block.attention.attention_head_size
+        if not hasattr(block.attention, 'qkv_projection'):
+            continue
 
-            # Store mask in the block for use during training
-            mask = torch.ones(block.attention.all_head_size * 3, 1)
+        attn = block.attention
+        num_heads = attn.num_attention_heads
+        head_size = attn.attention_head_size
+        all_head_size = attn.all_head_size
+        device = attn.qkv_projection.weight.device
 
-            for head_idx in range(num_heads):
-                if (layer_idx, head_idx) in frozen_heads:
-                    # Zero out this head in the mask
-                    for qkv_idx in range(3):  # q, k, v
-                        start = qkv_idx * block.attention.all_head_size + head_idx * head_size
-                        end = start + head_size
-                        mask[start:end, :] = 0.0
+        # mask for qkv_projection.weight : shape [all_head_size*3, hidden_size]
+        qkv_mask = torch.ones(all_head_size * 3, 1, device=device)
 
-            block.attention._frozen_head_mask = mask.to(block.attention.qkv_projection.weight.device)
+        # mask for output_projection.weight : shape [hidden_size, all_head_size]
+        out_mask = torch.ones(1, all_head_size, device=device)
+
+        for head_idx in range(num_heads):
+            if (layer_idx, head_idx) not in frozen_heads:
+                continue
+            for qkv_idx in range(3):
+                start = qkv_idx * all_head_size + head_idx * head_size
+                end = start + head_size
+                qkv_mask[start:end, :] = 0.0
+
+            col_start = head_idx * head_size
+            col_end = col_start + head_size
+            out_mask[:, col_start:col_end] = 0.0
+
+        attn._frozen_qkv_mask = qkv_mask
+        attn._frozen_out_mask = out_mask
+
+        if attn.qkv_bias and attn.qkv_projection.bias is not None:
+            attn._frozen_qkv_bias_mask = qkv_mask.squeeze(1)
 
 
 def evaluate_with_detailed_metrics(model, testloaders_by_task, device):
@@ -688,13 +705,14 @@ class TaskBasedContinualLearningTrainer:
 
         # Compute attention head importance for this task
         print(f"\nComputing attention head importance for Task {task_id}...")
-        importance_scores = compute_attention_head_importance(
-            self.model, trainloader, self.device, TASKS[task_id]['classes']
+        importance_scores = calculate_head_importance(
+            self.model, trainloader, self.device, task_classes=None
         )
         self.task_importance_scores[task_id] = importance_scores
 
         # Freeze important heads for previous tasks if requested
-        if freeze_heads_after and task_id > 2:  # Only freeze after learning beyond pre-trained tasks
+        #if freeze_heads_after and task_id > 2:  # Only freeze after learning beyond pre-trained tasks
+        if freeze_heads_after and task_id > 3:
             print(f"\nFreezing most important attention heads (freeze_ratio={freeze_ratio})...")
             frozen_heads = freeze_attention_heads_for_tasks(
                 self.model, self.task_importance_scores, freeze_ratio
@@ -755,15 +773,22 @@ class TaskBasedContinualLearningTrainer:
             # Backward pass
             loss.backward()
 
-            # Apply gradient masks for frozen heads
+            # Apply gradient masks for frozen heads (qkv_projection + output_projection + bias)
             for block in self.model.encoder.blocks:
-                if hasattr(block.attention, '_frozen_head_mask'):
-                    mask = block.attention._frozen_head_mask
-                    if hasattr(block.attention, 'qkv_projection'):
-                        if block.attention.qkv_projection.weight.grad is not None:
-                            # Apply mask to gradients
-                            grad = block.attention.qkv_projection.weight.grad
-                            grad.mul_(mask.expand_as(grad))
+                attn = block.attention
+                if not hasattr(attn, '_frozen_qkv_mask'):
+                    continue
+                if attn.qkv_projection.weight.grad is not None:
+                    attn.qkv_projection.weight.grad.mul_(
+                        attn._frozen_qkv_mask.expand_as(attn.qkv_projection.weight.grad)
+                    )
+                if hasattr(attn, '_frozen_qkv_bias_mask') and attn.qkv_projection.bias is not None \
+                        and attn.qkv_projection.bias.grad is not None:
+                    attn.qkv_projection.bias.grad.mul_(attn._frozen_qkv_bias_mask)
+                if attn.output_projection.weight.grad is not None:
+                    attn.output_projection.weight.grad.mul_(
+                        attn._frozen_out_mask.expand_as(attn.output_projection.weight.grad)
+                    )
 
             self.optimizer.step()
 
@@ -994,6 +1019,28 @@ def main():
     trainer.metrics_history['after_task_2'] = baseline_metrics
     trainer.learned_tasks = [1, 2]  # Mark tasks 1-2 as learned
 
+    # we freeze heads before starting to learn task 3    
+    if args.freeze_heads:
+        print("Computing head importance for pre-trained tasks 1 & 2...")
+        for task_id in PRETRAINED_TASKS:
+            trainloader_pretrained, _, _ = prepare_data(
+                batch_size=args.batch_size,
+                classes_to_keep=TASKS[task_id]['classes'],
+                remap_labels=False
+            )
+            importance = calculate_head_importance(
+                expanded_model, trainloader_pretrained, device, task_classes=None
+            )
+            trainer.task_importance_scores[task_id] = importance
+
+        #freeze heads before training on new tasks (3-5) to prevent forgetting of pre-trained tasks (1-2)
+        frozen_heads = freeze_attention_heads_for_tasks(
+            expanded_model, trainer.task_importance_scores, freeze_ratio=args.freeze_ratio
+        )
+        apply_head_freezing_mask(expanded_model, frozen_heads)
+        trainer.frozen_heads_history[0] = frozen_heads
+        print(f"Frozen {len(frozen_heads)} heads before training Task 3")
+
     # Sequentially learn tasks 3, 4, 5
     for task_id in CL_TASKS:
         # Prepare training data for this task
@@ -1023,7 +1070,11 @@ def main():
 
     # Compare baseline with final
     baseline = trainer.metrics_history['after_task_2']
-    final = trainer.metrics_history['after_task_5']
+    last_task = CL_TASKS[-1] # the last task learned (e.g., 3, 4, or 5)
+    final = trainer.metrics_history.get(f'after_task_{last_task}', {})
+
+    if baseline and final:
+        print(f"Overall Accuracy: {baseline['overall_accuracy']:.4f} → {final['overall_accuracy']:.4f}") #overall accuracy before and after continual learning
 
     print("\nAccuracy on each task after learning all tasks:")
     print(f"{'Task':<30} {'After Task 2':<15} {'After All Tasks':<15} {'Change':<15}")
