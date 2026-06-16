@@ -57,7 +57,9 @@ def plot_vit_metrics(input_dir):
     os.makedirs(output_dir, exist_ok=True)
 
     # Construct the dynamic filename (e.g., 'vit_metrics_ViT_100_Epochs.png')
-    output_filename = f"vit_metrics_{input_dir}.png"
+    # Extract only the experiment name to prevent path separators from being included in the output filename
+    experiment_name = os.path.basename(os.path.normpath(input_dir))
+    output_filename = f"vit_metrics_{experiment_name}.png"
     output_path = os.path.join(output_dir, output_filename)
 
     # Save the plot and close it to free memory
@@ -69,7 +71,10 @@ def plot_vit_metrics(input_dir):
 # --- Example Usage ---
 if __name__ == "__main__":
     # Plot for the 100 epochs run
-    plot_vit_metrics('ViT_100_Epochs')
+    #plot_vit_metrics('ViT_100_Epochs')
     
     # Plot for the 60 epochs run
-    plot_vit_metrics('ViT_60_Epochs')
+    #plot_vit_metrics('ViT_60_Epochs')
+
+    # Plot for the 60 epochs run, trained on task 1 und 2
+    plot_vit_metrics('experiments/vit_pretrained_T1and2_cifar10_60epochs')
