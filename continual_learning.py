@@ -936,6 +936,8 @@ def main():
                         help='Ratio of attention heads to freeze (default: 0.3)')
     parser.add_argument('--seed', type=int, default=42,
                         help='Random seed (matches paper repo default)')
+    parser.add_argument('--save-head-importance', action='store_true',
+                        help='Save head importance scores to json')
 
     args = parser.parse_args()
 
@@ -1137,11 +1139,12 @@ def main():
     print(f"Results saved to: {os.path.join(args.save_dir, args.exp_name)}")
     print("=" * 80)
 
-    #save the importance scores for each head per task, without task 5, because we do not freeze heads after task 5
-    dump = {str(t): {f"{l},{h}": float(s) for (l, h), s in sc.items()}
-            for t, sc in trainer.task_importance_scores.items()}
-    with open(os.path.join(args.save_dir, args.exp_name, "head_importance_per_task.json"), "w") as f:
-        json.dump(dump, f, indent=2)
+    if args.save_head_importance:
+        #save the importance scores for each head per task, without task 5, because we do not freeze heads after task 5
+        dump = {str(t): {f"{l},{h}": float(s) for (l, h), s in sc.items()}
+                for t, sc in trainer.task_importance_scores.items()}
+        with open(os.path.join(args.save_dir, "head_importance_per_task.json"), "w") as f:
+            json.dump(dump, f, indent=2)
 
 
 if __name__ == "__main__":

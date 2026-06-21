@@ -1,0 +1,335 @@
+{
+    "after_task_2": {
+        "overall_accuracy": 0.3241,
+        "task_metrics": {
+            "1": {
+                "accuracy": 0.859,
+                "loss": 0.6229202785491943,
+                "per_class_accuracy": {
+                    "0": 0.819,
+                    "1": 0.899
+                }
+            },
+            "2": {
+                "accuracy": 0.7225,
+                "loss": 0.9773862800598144,
+                "per_class_accuracy": {
+                    "2": 0.7,
+                    "3": 0.745
+                }
+            },
+            "3": {
+                "accuracy": 0.034,
+                "loss": 3.1858834228515627,
+                "per_class_accuracy": {
+                    "4": 0.056,
+                    "5": 0.012
+                }
+            },
+            "4": {
+                "accuracy": 0.0,
+                "loss": 3.4842240753173828,
+                "per_class_accuracy": {
+                    "6": 0.0,
+                    "7": 0.0
+                }
+            },
+            "5": {
+                "accuracy": 0.005,
+                "loss": 3.3250133361816405,
+                "per_class_accuracy": {
+                    "8": 0.004,
+                    "9": 0.006
+                }
+            }
+        }
+    },
+    "after_task_3": {
+        "overall_accuracy": 0.2887,
+        "task_metrics": {
+            "1": {
+                "accuracy": 0.5895,
+                "loss": 1.4900663871765136,
+                "per_class_accuracy": {
+                    "0": 0.636,
+                    "1": 0.543
+                }
+            },
+            "2": {
+                "accuracy": 0.1675,
+                "loss": 2.3951160125732422,
+                "per_class_accuracy": {
+                    "2": 0.213,
+                    "3": 0.122
+                }
+            },
+            "3": {
+                "accuracy": 0.6685,
+                "loss": 1.1161770629882812,
+                "per_class_accuracy": {
+                    "4": 0.766,
+                    "5": 0.571
+                }
+            },
+            "4": {
+                "accuracy": 0.0015,
+                "loss": 3.524908538818359,
+                "per_class_accuracy": {
+                    "6": 0.003,
+                    "7": 0.0
+                }
+            },
+            "5": {
+                "accuracy": 0.0165,
+                "loss": 2.78745906829834,
+                "per_class_accuracy": {
+                    "8": 0.005,
+                    "9": 0.028
+                }
+            }
+        }
+    },
+    "after_task_4": {
+        "overall_accuracy": 0.2541,
+        "task_metrics": {
+            "1": {
+                "accuracy": 0.096,
+                "loss": 3.245705505371094,
+                "per_class_accuracy": {
+                    "0": 0.12,
+                    "1": 0.072
+                }
+            },
+            "2": {
+                "accuracy": 0.0905,
+                "loss": 2.6062763748168947,
+                "per_class_accuracy": {
+                    "2": 0.122,
+                    "3": 0.059
+                }
+            },
+            "3": {
+                "accuracy": 0.2535,
+                "loss": 2.485898323059082,
+                "per_class_accuracy": {
+                    "4": 0.284,
+                    "5": 0.223
+                }
+            },
+            "4": {
+                "accuracy": 0.8155,
+                "loss": 0.7847888336181641,
+                "per_class_accuracy": {
+                    "6": 0.764,
+                    "7": 0.867
+                }
+            },
+            "5": {
+                "accuracy": 0.015,
+                "loss": 3.1747630767822264,
+                "per_class_accuracy": {
+                    "8": 0.0,
+                    "9": 0.03
+                }
+            }
+        }
+    },
+    "after_task_5": {
+        "overall_accuracy": 0.2352,
+        "task_metrics": {
+            "1": {
+                "accuracy": 0.019,
+                "loss": 3.973019775390625,
+                "per_class_accuracy": {
+                    "0": 0.038,
+                    "1": 0.0
+                }
+            },
+            "2": {
+                "accuracy": 0.0595,
+                "loss": 3.0737188186645508,
+                "per_class_accuracy": {
+                    "2": 0.114,
+                    "3": 0.005
+                }
+            },
+            "3": {
+                "accuracy": 0.1165,
+                "loss": 3.0173746337890623,
+                "per_class_accuracy": {
+                    "4": 0.228,
+                    "5": 0.005
+                }
+            },
+            "4": {
+                "accuracy": 0.3525,
+                "loss": 2.156889793395996,
+                "per_class_accuracy": {
+                    "6": 0.187,
+                    "7": 0.518
+                }
+            },
+            "5": {
+                "accuracy": 0.6285,
+                "loss": 0.9938877449035645,
+                "per_class_accuracy": {
+                    "8": 0.872,
+                    "9": 0.385
+                }
+            }
+        }
+    },
+    "class_names": [
+        "plane",
+        "car",
+        "bird",
+        "cat",
+        "deer",
+        "dog",
+        "frog",
+        "horse",
+        "ship",
+        "truck"
+    ],
+    "frozen_heads": {
+        "2": [
+            [
+                2,
+                3
+            ],
+            [
+                0,
+                3
+            ],
+            [
+                3,
+                1
+            ],
+            [
+                0,
+                0
+            ]
+        ],
+        "3": [
+            [
+                1,
+                2
+            ],
+            [
+                2,
+                1
+            ],
+            [
+                0,
+                0
+            ],
+            [
+                3,
+                1
+            ],
+            [
+                0,
+                3
+            ],
+            [
+                3,
+                0
+            ],
+            [
+                2,
+                3
+            ],
+            [
+                1,
+                0
+            ]
+        ],
+        "4": [
+            [
+                0,
+                1
+            ],
+            [
+                1,
+                2
+            ],
+            [
+                2,
+                1
+            ],
+            [
+                0,
+                0
+            ],
+            [
+                3,
+                1
+            ],
+            [
+                1,
+                1
+            ],
+            [
+                0,
+                3
+            ],
+            [
+                3,
+                0
+            ],
+            [
+                2,
+                3
+            ],
+            [
+                1,
+                0
+            ],
+            [
+                3,
+                2
+            ],
+            [
+                1,
+                3
+            ]
+        ]
+    },
+    "tasks": {
+        "1": {
+            "classes": [
+                0,
+                1
+            ],
+            "name": "Task 1: Plane & Car"
+        },
+        "2": {
+            "classes": [
+                2,
+                3
+            ],
+            "name": "Task 2: Bird & Cat"
+        },
+        "3": {
+            "classes": [
+                4,
+                5
+            ],
+            "name": "Task 3: Deer & Dog"
+        },
+        "4": {
+            "classes": [
+                6,
+                7
+            ],
+            "name": "Task 4: Frog & Horse"
+        },
+        "5": {
+            "classes": [
+                8,
+                9
+            ],
+            "name": "Task 5: Ship & Truck"
+        }
+    }
+}
