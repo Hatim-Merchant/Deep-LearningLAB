@@ -4,7 +4,7 @@ Continual Learning Experiment for ViT on CIFAR-10 with Attention Head Freezing
 This script demonstrates catastrophic forgetting and mitigation by:
 1. Loading a pre-trained ViT (trained on first 2 tasks = classes 0-3)
 2. Sequentially learning tasks 3, 4, 5 (classes 4-5, 6-7, 8-9)
-3. After each task, freezing the most important attention heads for previous tasks
+3. After each task (but not after the last task), freezing the most important attention heads for previous tasks
 4. Tracking performance on ALL tasks after each new task to show forgetting
 
 Task Structure (CIFAR-10):
@@ -25,7 +25,11 @@ import argparse
 import numpy as np
 import torch
 from torch import nn, optim
+from torch.utils.data import DataLoader, RandomSampler
 from collections import defaultdict
+from tqdm import tqdm
+from itertools import islice
+
 
 from utils import save_checkpoint
 from data import prepare_data
@@ -50,8 +54,8 @@ PRETRAINED_TASKS = [1, 2]
 PRETRAINED_CLASSES = [0, 1, 2, 3]
 
 # Continual learning tasks (remaining 3 tasks = 6 classes)
-#CL_TASKS = [3, 4, 5] #train all remaining tasks
-CL_TASKS = [3] #just train task 3
+CL_TASKS = [3, 4, 5] #train all remaining tasks
+#CL_TASKS = [3] #just train task 3
 
 def get_classes_for_tasks(task_ids):
     """Get all class indices for a list of task IDs."""
@@ -383,20 +387,38 @@ def compute_attention_head_importance(model, dataloader, device, task_classes):
 
     return importance_scores
 
-
-def freeze_attention_heads_for_tasks(model, task_importance_scores, freeze_ratio=0.3):
+def freeze_attention_heads_for_tasks(model, task_importance_scores, freeze_ratio=0.3, already_frozen=None):
     """
     Freeze the most important attention heads for previously learned tasks.
 
+# ---------------------------------------------------------------------------
+# DISCLAIMER — Deviation from Michel et al. (2019), "Are Sixteen Heads
+# Really Better than One?" 
+#
+# The original paper uses the importance score I_h to identify the least
+# important attention heads and to remove them from the model (pruning).
+#
+# Our implementation reverses this logic: we use the same score to identify the
+# most important heads and FREEZE them (requires_grad = False), instead of
+# deleting the unimportant ones. All heads therefore remain in the model; the
+# only thing that changes is which heads are still updated during training.
+#
+# Consequences of this:
+#   - The model's parameter count stays unchanged (no memory or speed gain at
+#     inference time, unlike the pruning in the paper).
+#   - Frozen heads keep their learned weights; only the non-frozen heads
+#     continue to be trained.
+# ---------------------------------------------------------------------------
+    
     Args:
         model: ViT model
-        task_importance_scores: Dict mapping task_id -> importance_scores dict
-        freeze_ratio: Ratio of heads to freeze (default 0.3 = 30%)
+        task_importance_scores: Dict mapping task_id -> {(layer, head): score}
+        freeze_ratio: Ratio of heads to freeze (default 0.3 = 30%) per call
 
     Returns:
-        Set of frozen (layer_idx, head_idx) tuples
+        Set of newly frozen (layer_idx, head_idx) tuples
     """
-    frozen_heads = set()
+    already_frozen = already_frozen or set()
 
     # Collect all importance scores across tasks
     all_scores = defaultdict(list)
@@ -407,36 +429,26 @@ def freeze_attention_heads_for_tasks(model, task_importance_scores, freeze_ratio
     # For each layer, freeze the top heads by cumulative importance
     num_heads = model.encoder.blocks[0].attention.num_attention_heads
     num_layers = len(model.encoder.blocks)
-    heads_to_freeze_per_layer = max(1, int(num_heads * freeze_ratio))
+    total_heads = num_heads * num_layers
 
-    for layer_idx in range(num_layers):
-        # Get scores for this layer
-        layer_scores = []
-        for head_idx in range(num_heads):
-            key = (layer_idx, head_idx)
-            if key in all_scores:
-                # Sum importance across all tasks
-                total_importance = sum(score for _, score in all_scores[key])
-                layer_scores.append((head_idx, total_importance))
+    # determine_pruning_sequence: constant per-step count (paper int() truncation)
+    n_to_freeze = int(total_heads * freeze_ratio)
 
-        # Sort by importance and freeze top heads
-        layer_scores.sort(key=lambda x: x[1], reverse=True)
-        for head_idx, _ in layer_scores[:heads_to_freeze_per_layer]:
-            frozen_heads.add((layer_idx, head_idx))
+    # what_to_prune: ONE global list, EXCLUDE already-frozen, sort DESCENDING
+    heads_and_score = [
+        ((layer_idx, head_idx),
+        sum(score for _, score in all_scores[(layer_idx, head_idx)]))
+        for layer_idx in range(num_layers)
+        for head_idx in range(num_heads)
+        if (layer_idx, head_idx) in all_scores
+        and (layer_idx, head_idx) not in already_frozen
+    ]
+    heads_and_score.sort(key=lambda x: x[1], reverse=True)
 
-            # Freeze this head's parameters
-            block = model.encoder.blocks[layer_idx]
-            if hasattr(block.attention, 'heads'):
-                # MultiHeadAttention
-                for param in block.attention.heads[head_idx].parameters():
-                    param.requires_grad = False
-            elif hasattr(block.attention, 'qkv_projection'):
-                # For FasterMultiHeadAttention, we freeze the corresponding slice
-                # This is approximate - we freeze the entire qkv_projection for now
-                # A more refined approach would freeze only specific weight slices
-                pass  # Will handle with masks in training
+    # [:n_to_freeze] auto-caps when fewer than n heads remain (the 16-head ceiling)
+    new_frozen = {key for key, _ in heads_and_score[:n_to_freeze]}
 
-    return frozen_heads
+    return new_frozen
 
 
 def apply_head_freezing_mask(model, frozen_heads):
@@ -479,7 +491,11 @@ def apply_head_freezing_mask(model, frozen_heads):
 
         if attn.qkv_bias and attn.qkv_projection.bias is not None:
             attn._frozen_qkv_bias_mask = qkv_mask.squeeze(1)
-
+        #snapshot the initial values of the frozen slices (once, at freeze time)
+        attn._frozen_qkv_weight_ref = attn.qkv_projection.weight.detach().clone()
+        attn._frozen_out_weight_ref = attn.output_projection.weight.detach().clone()
+        if attn.qkv_bias and attn.qkv_projection.bias is not None:
+            attn._frozen_qkv_bias_ref = attn.qkv_projection.bias.detach().clone()
 
 def evaluate_with_detailed_metrics(model, testloaders_by_task, device):
     """
@@ -580,6 +596,7 @@ class TaskBasedContinualLearningTrainer:
         self.exp_name = exp_name
         self.device = device
         self.config = config
+        self.all_frozen_heads = set()  #cumulative, does not shrink
 
         # Metrics storage - tracks performance on all tasks after each new task
         self.metrics_history = {
@@ -670,23 +687,29 @@ class TaskBasedContinualLearningTrainer:
         key = f'after_task_{task_id}'
         self.metrics_history[key] = final_metrics
 
-        # Compute attention head importance for this task
-        print(f"\nComputing attention head importance for Task {task_id}...")
-        importance_scores = calculate_head_importance(
-            self.model, trainloader, self.device, task_classes=None
-        )
-        self.task_importance_scores[task_id] = importance_scores
-
         # Freeze important heads for previous tasks if requested
-        #if freeze_heads_after and task_id > 2:  # Only freeze after learning beyond pre-trained tasks
-        if freeze_heads_after and task_id > 3:
-            print(f"\nFreezing most important attention heads (freeze_ratio={freeze_ratio})...")
-            frozen_heads = freeze_attention_heads_for_tasks(
-                self.model, self.task_importance_scores, freeze_ratio
+        if freeze_heads_after and task_id < CL_TASKS[-1]: #do not freeze after task 5 / last task
+        #if freeze_heads_after:
+            # Compute attention head importance for this task
+            print(f"\nComputing attention head importance for Task {task_id}...")
+            importance_scores = calculate_head_importance(
+                self.model,
+                trainloader.dataset,
+                batch_size=trainloader.batch_size,
+                device=self.device,
+                task_classes=None,
             )
-            apply_head_freezing_mask(self.model, frozen_heads)
-            self.frozen_heads_history[task_id] = frozen_heads
-            print(f"  Frozen {len(frozen_heads)} attention heads")
+            self.task_importance_scores[task_id] = importance_scores
+            print(f"\nFreezing most important attention heads (freeze_ratio={freeze_ratio})...")
+            new_top_heads  = freeze_attention_heads_for_tasks(
+                self.model, self.task_importance_scores, freeze_ratio,
+                already_frozen=self.all_frozen_heads
+            )
+            self.all_frozen_heads |= new_top_heads #add new frozen heads to previously frozen heads set
+            apply_head_freezing_mask(self.model, self.all_frozen_heads)
+            self.frozen_heads_history[task_id] = set(self.all_frozen_heads)
+            print(f"  Frozen {len(new_top_heads)} new attention heads")
+            print(f"  Frozen in total {len(self.all_frozen_heads)} attention heads")
 
         # Print summary of forgetting
         self.print_forgetting_summary(task_id)
@@ -758,6 +781,26 @@ class TaskBasedContinualLearningTrainer:
                     )
 
             self.optimizer.step()
+            
+            #reset frozen slices exactly (removes weight-decay drift)
+            with torch.no_grad():
+                for block in self.model.encoder.blocks:
+                    attn = block.attention
+                    if not hasattr(attn, '_frozen_qkv_mask'):
+                        continue
+                    qkv_frozen = (attn._frozen_qkv_mask == 0)        # [3*all_head_size, 1]
+                    attn.qkv_projection.weight.data = torch.where(
+                        qkv_frozen, attn._frozen_qkv_weight_ref, attn.qkv_projection.weight.data
+                    )
+                    out_frozen = (attn._frozen_out_mask == 0)        # [1, all_head_size]
+                    attn.output_projection.weight.data = torch.where(
+                        out_frozen, attn._frozen_out_weight_ref, attn.output_projection.weight.data
+                    )
+                    if hasattr(attn, '_frozen_qkv_bias_ref') and attn.qkv_projection.bias is not None:
+                        bias_frozen = (attn._frozen_qkv_bias_mask == 0)   # [3*all_head_size]
+                        attn.qkv_projection.bias.data = torch.where(
+                            bias_frozen, attn._frozen_qkv_bias_ref, attn.qkv_projection.bias.data
+                        )
 
             total_loss += loss.item() * len(images)
             num_samples += len(images)
@@ -1006,17 +1049,26 @@ def main():
                 remap_labels=False
             )
             importance = calculate_head_importance(
-                expanded_model, trainloader_pretrained, device, task_classes=None
+                expanded_model,
+                trainloader_pretrained.dataset,
+                batch_size=trainloader_pretrained.batch_size,
+                device=device,
+                task_classes=None,
             )
             trainer.task_importance_scores[task_id] = importance
 
         #freeze heads before training on new tasks (3-5) to prevent forgetting of pre-trained tasks (1-2)
         frozen_heads = freeze_attention_heads_for_tasks(
-            expanded_model, trainer.task_importance_scores, freeze_ratio=args.freeze_ratio
+            expanded_model, trainer.task_importance_scores,
+            freeze_ratio=args.freeze_ratio,
+            already_frozen=trainer.all_frozen_heads
         )
-        apply_head_freezing_mask(expanded_model, frozen_heads)
-        trainer.frozen_heads_history[0] = frozen_heads
-        print(f"Frozen {len(frozen_heads)} heads before training Task 3")
+        trainer.all_frozen_heads |= frozen_heads
+        apply_head_freezing_mask(expanded_model, trainer.all_frozen_heads)
+        trainer.frozen_heads_history[2] = set(trainer.all_frozen_heads) #2 for frozen heads after task 2, to match later inputs
+        print(f"Frozen {len(frozen_heads)} heads before training Task 3"
+              f"(total {len(trainer.all_frozen_heads)})")
+
 
     # Sequentially learn tasks 3, 4, 5
     for task_id in CL_TASKS:
@@ -1084,6 +1136,12 @@ def main():
     print("Task-Based Continual Learning Experiment Complete!")
     print(f"Results saved to: {os.path.join(args.save_dir, args.exp_name)}")
     print("=" * 80)
+
+    #save the importance scores for each head per task, without task 5, because we do not freeze heads after task 5
+    dump = {str(t): {f"{l},{h}": float(s) for (l, h), s in sc.items()}
+            for t, sc in trainer.task_importance_scores.items()}
+    with open(os.path.join(args.save_dir, args.exp_name, "head_importance_per_task.json"), "w") as f:
+        json.dump(dump, f, indent=2)
 
 
 if __name__ == "__main__":
