@@ -100,12 +100,16 @@ def expand_model_for_new_classes(model, config, num_total_classes=10):
 
 def calculate_head_importance(
     model,
-    dataloader,
-    device,
-    task_classes=None,
-    max_batches=10,
+    data,
+    batch_size,
+    device=None,
     normalize_scores_by_layer=True,
+    subset_size=1.0,
+    task_classes=None,
+    verbose=True,
+    disable_progress_bar=False,
 ):
+
     """
     Compute attention-head importance scores according to Michel et al. Section 4.1.
 
@@ -129,13 +133,16 @@ def calculate_head_importance(
 
             [batch_size, num_attention_heads, sequence_length, attention_head_size]
 
-    Args:
+    Args: 
         model: ViT model whose attention modules store context_layer_val
-        dataloader: Dataloader used to estimate head importance
-        device: Device on which the model and data are located
-        task_classes: Classes of the current task; currently not needed directly
-        max_batches: Maximum number of batches used for estimating importance
+        data: Dataset (not a DataLoader) used to estimate importance
+        batch_size: Batch size for the internally built DataLoader
+        device: Compute device; defaults to the model's device
         normalize_scores_by_layer: If True, normalize head scores inside each layer by L2 norm
+        subset_size: Fraction (<=1) or absolute number of examples to use
+        task_classes: Optional list mapping task-local labels back to their global dataset class indices (e.g. [4, 5] turns label 0 into class 4 and label 1 into class 5); None if labels are not remapped
+        verbose: If True, print a short summary (number of examples, batch size, number of steps) before the computation
+        disable_progress_bar: If True, suppress the tqdm progress bar
 
     Returns:
         Dictionary mapping (layer_idx, head_idx) to the corresponding importance score
@@ -149,27 +156,49 @@ def calculate_head_importance(
     # Important: eval() is okay, but torch.no_grad() must NOT be used.
     model.eval()
 
+    device = device or next(model.parameters()).device
+
     # Access transformer blocks.
     # This assumes your model structure is: model.encoder.blocks
     blocks = model.encoder.blocks
 
     # Read number of layers and number of heads from the model.
     num_layers = len(blocks)
-    num_heads = blocks[0].attention.num_attention_heads
+    num_heads = blocks[0].attention.num_attention_heads 
 
+    #fix numbers of examples instead of number of batches, code from paper´s repo
+    if subset_size <= 1:
+        subset_size *= len(data)
+    n_steps = int(np.ceil(int(subset_size) / batch_size))
+
+
+    # Prepare data loader
+    sampler = RandomSampler(data)
+    dataloader = islice(
+        DataLoader(
+        data, 
+        sampler=sampler, 
+        batch_size=batch_size), 
+    n_steps
+    )
+    prune_iterator = tqdm(
+        dataloader, 
+        desc="Iteration",
+        disable=disable_progress_bar, 
+        total=n_steps,
+    )
+
+    if verbose:
+        print("***** Calculating head importance *****")
+        print(f"  Num examples = {len(data)}")
+        print(f"  Batch size   = {batch_size}")
+        print(f"  Num steps    = {n_steps}")
     # Tensor that stores one importance value per layer and per head.
     # Shape: [num_layers, num_heads]
-    head_importance = torch.zeros(num_layers, num_heads, device=device)
+    head_importance = torch.zeros(num_layers, num_heads, device=device) #more efficient than the paper´s repo, create tensor on the used device, not first on cpu and then move to used device
 
-    # Counts how many tokens/patches were used for averaging.
-    # In ViT, this is usually: batch_size * sequence_length.
-    total_tokens = 0
-
-    # Counts how many batches were actually processed.
-    processed_batches = 0
-
-    # Standard classification loss.
-    loss_fn = nn.CrossEntropyLoss()
+    # Standard classification loss, paper uses sum for loss
+    loss_fn = nn.CrossEntropyLoss(reduction="sum")
 
     # Convert task_classes once, not inside every batch.
     # Example: task_classes = [4, 5]
@@ -179,50 +208,15 @@ def calculate_head_importance(
     if task_classes is not None:
         task_classes = torch.tensor(task_classes, device=device, dtype=torch.long)
 
-    for batch_idx, batch in enumerate(dataloader):
-        # Stop after max_batches to avoid computing importance on the full dataset.
-        # Set max_batches=None if you want to use the complete dataloader.
-        if max_batches is not None and batch_idx >= max_batches:
-            break
-
-        # Unpack batch.
-        # This assumes the dataloader returns: images, labels
-        images, labels = batch
-
-        # Move data to the correct device.
-        images = images.to(device)
-        labels = labels.to(device).long()  # Ensure labels are long for CrossEntropyLoss
-
-
-        # IMPORTANT:
-        # Use this only if the dataloader remaps task labels to 0, 1, ...
-        # and the model output has original/global class indices, e.g. 10 CIFAR-10 classes.
-        if task_classes is not None:
+    for _, batch in enumerate(prune_iterator):
+        images, labels = (t.to(device) for t in batch)   # ViT batch = (image, label)
+        labels = labels.long()
+        if task_classes is not None:                      # only if labels are remapped
             labels = task_classes[labels]
 
-        # Clear old gradients before the new backward pass.
-        model.zero_grad(set_to_none=True)
-
-        # Gradients are required because we need context_layer_val.grad.
-        # Therefore, do NOT wrap this part in torch.no_grad().
-        with torch.enable_grad():
-            outputs = model(images, output_attentions=False)
-
-            # Some models return (logits, attentions), others return logits directly.
-            # This keeps the function robust.
-            if isinstance(outputs, tuple):
-                logits = outputs[0]
-            else:
-                logits = outputs
-
-            # Compute loss for the current batch.
-            loss = loss_fn(logits, labels)
-
-            # Backward pass computes gradients for all tensors where retain_grad() was called.
-            loss.backward()
-
-        # Token count should be added once per batch, not once per layer.
-        batch_token_count = None
+        # ViT returns (logits, attn) 
+        loss = loss_fn(model(images, output_attentions=False)[0], labels)
+        loss.backward()
 
         for layer_idx, block in enumerate(blocks):
             attention_module = block.attention
@@ -277,33 +271,6 @@ def calculate_head_importance(
             #
             # The result is accumulated for this layer.
             head_importance[layer_idx] += dot.abs().sum(dim=(0, 2)).detach()
-
-            # Count tokens once per batch.
-            if batch_token_count is None:
-                batch_size = dot.shape[0]
-                sequence_length = dot.shape[2]
-                batch_token_count = batch_size * sequence_length
-
-        # Add token count after all layers have been processed.
-        total_tokens += batch_token_count
-
-        # Count this batch as processed.
-        processed_batches += 1
-
-    # Make sure at least one batch was processed.
-    if processed_batches == 0:
-        raise RuntimeError(
-            "No batch was processed. Check the dataloader or increase max_batches."
-        )
-
-    # Make sure averaging is possible.
-    if total_tokens == 0:
-        raise RuntimeError(
-            "total_tokens is 0. Something is wrong with the attention output shape."
-        )
-
-    # Approximate the expectation E_x[...] by averaging over all seen tokens.
-    head_importance = head_importance / total_tokens
 
     # Normalize importance scores inside each layer by L2 norm.
     # This follows the layer-wise normalization used in Michel et al.
