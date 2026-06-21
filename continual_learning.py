@@ -16,7 +16,7 @@ Task Structure (CIFAR-10):
 
 The original model files are NEVER modified - we always load a copy.
 """
-
+import random #for global seed
 import os
 import time
 import json
@@ -891,11 +891,21 @@ def main():
                         help='Enable attention head freezing after each task')
     parser.add_argument('--freeze-ratio', type=float, default=0.3,
                         help='Ratio of attention heads to freeze (default: 0.3)')
+    parser.add_argument('--seed', type=int, default=42,
+                        help='Random seed (matches paper repo default)')
 
     args = parser.parse_args()
 
     # Determine device
     device = args.device if args.device else ('cuda' if torch.cuda.is_available() else 'cpu')
+
+    # Global seed: fixes, among other things, the RNG that RandomSampler in
+    # calculate_head_importance draws from (analogous to run_classifier.py: set_seeds).
+    torch.manual_seed(args.seed)
+    if device == 'cuda':
+        torch.cuda.manual_seed_all(args.seed)
+    np.random.seed(args.seed)
+    random.seed(args.seed)
 
     # Set experiment name
     if args.exp_name is None:
