@@ -26,7 +26,7 @@
 # Public API (called from train_eval.py and utils/trainer.py):
 #   calculate_head_importance(...)      -> dict {(layer, head): score}
 #   freeze_attention_heads_for_tasks(...) -> set {(layer, head)}
-#   apply_head_freezing_mask(...)       -> None  (stores masks on attn modules)
+#   build_head_freezing_mask(...)       -> None  (stores masks on attn modules)
 #   freeze_apply_grad_mask(...)         -> None  (per step, before optimizer.step)
 #   freeze_restore_weights(...)         -> None  (per step, after optimizer.step)
 # =============================================================================
@@ -271,7 +271,7 @@ def freeze_attention_heads_for_tasks(
     return new_frozen
 
 
-def apply_head_freezing_mask(model: nn.Module, frozen_heads: Set[HeadKey]) -> None:
+def build_head_freezing_mask(model: nn.Module, frozen_heads: Set[HeadKey]) -> None:
     """Build gradient masks and weight snapshots for all frozen heads.
 
     Must be called once after the frozen set changes (i.e. after each call to
@@ -355,7 +355,7 @@ def freeze_apply_grad_mask(model: nn.Module) -> None:
     (0 for frozen slices, 1 for trainable slices), so the optimizer sees a
     zero update for frozen parameters.
 
-    No-op for blocks where apply_head_freezing_mask has not been called
+    No-op for blocks where build_head_freezing_mask has not been called
     (i.e. _frozen_qkv_mask is absent), which is the case before the first
     task completes.
 
@@ -391,11 +391,11 @@ def freeze_restore_weights(model: nn.Module) -> None:
     Must be called AFTER optimizer.step(). Even though freeze_apply_grad_mask
     zeroes the gradient, optimisers like Adam maintain running moment estimates
     that can drift frozen weights via weight decay. This function hard-restores
-    the frozen slices from the snapshot taken by apply_head_freezing_mask,
+    the frozen slices from the snapshot taken by build_head_freezing_mask,
     guaranteeing that frozen weights are bit-identical to their values at freeze
     time.
 
-    No-op for blocks where apply_head_freezing_mask has not been called.
+    No-op for blocks where build_head_freezing_mask has not been called.
 
     Args:
         model: timm VisionTransformer with frozen-head masks and snapshots attached.
