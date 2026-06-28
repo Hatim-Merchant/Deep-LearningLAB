@@ -21,3 +21,16 @@ pip install -r requirements.txt
 bash no_freezing.sh
 5. Run the code (adjust parameters to your needs)  
 bash freeze.sh
+
+## Quick Start for branch "big-vit-attentionRetentionCL"
+
+1. Create conda environment (Python 3.11)  
+conda create -n your_env_name python=3.11
+2. Activate environment  
+conda activate your_env_name
+3. Install dependencies  
+pip install -r requirements.txt
+4. Load CIFAR-100  
+python load_data_on_gpu_cluster.py
+6. Run the baseline  
+bash train_cifar100.sh
