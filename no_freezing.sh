@@ -1,0 +1,1 @@
+python ./continual_learning.py --pretrained-dir "./experiments/vit_pretrained_T1and2_cifar10_60epochs" --exp-name "no_freezing" --epochs-per-task 30 --batch-size 128 --lr 0.001 --save-dir "./experiments"
