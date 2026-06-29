@@ -341,7 +341,7 @@ def train_one_task(GVM: GlobalVarsManager, taskid: int, task_classes: list[int],
     else:
         param_groups = set_learning_rates(GVM, model, args.lr, args.lr_scale, args.lr_scale_patterns)
 
-    if taskid == 0:
+    if taskid == 0 and args.optimizer == 'mod_adam':
         GVM.cache_dict['old_avg_attn_map'] = torch.zeros(12, 196).cuda().detach()
         GVM.cache_dict['avg_attn_map'] = torch.zeros(12, 196).cuda().detach()
         GVM.cache_dict['temp_count'] = 0
@@ -363,7 +363,8 @@ def train_one_task(GVM: GlobalVarsManager, taskid: int, task_classes: list[int],
             _epoch_scalar_str = train_one_epoch(GVM, epoch, dataloader, model, criterion, optimizer)
             print(f"Task [{taskid + 1:>{len(_ntstr)}}/{_ntstr}] Epoch [{epoch:>{len(_nestr := str(args.epochs))}}/{_nestr}]:: {_epoch_scalar_str}")
         scheduler.step(epoch)
-    GVM.cache_dict['old_avg_attn_map'] = GVM.cache_dict['avg_attn_map'].clone().detach() / GVM.cache_dict['temp_count']
+    if args.optimizer == 'mod_adam':
+        GVM.cache_dict['old_avg_attn_map'] = GVM.cache_dict['avg_attn_map'].clone().detach() / GVM.cache_dict['temp_count']
 
     _save_chekpoint(GVM, taskid, model)
 
