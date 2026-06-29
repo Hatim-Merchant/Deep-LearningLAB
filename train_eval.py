@@ -90,6 +90,10 @@ def get_args():
     # Display options
     parser.add_argument('--show_bar', action='store_true')
     parser.add_argument('--print_model', action='store_true')
+    # Logging options
+    parser.add_argument('--log_dir', type=str, default='',
+                        help='Directory for head-freeze JSON log. '
+                             'Empty string = no JSON written.')
 
     args = parser.parse_args()
 
@@ -181,6 +185,126 @@ def _save_chekpoint(GVM: GlobalVarsManager, taskid: int, model: VisionTransforme
 
     assert not f'task_params_{taskid}' in GVM.param_dict
     GVM.param_dict[f'task_params_{taskid}'] = task_params
+
+
+def _log_head_freeze_json(
+    log_dir: str,
+    taskid: int,
+    freeze_ratio: float,
+    freeze_subset: float,
+    new_frozen: set,
+    all_frozen: set,
+    total_heads: int,
+    task_importance_scores: dict,
+) -> None:
+    """Write head-freeze metrics for one task as a JSON entry to disk.
+
+    File name : <log_dir>/head_freeze_scores.json
+    Structure : A list of per-task entries accumulated over all tasks.
+    The file is overwritten atomically (tmp -> rename) after each task so
+    that the last fully-written state is preserved even on a crash.
+
+    JSON entry fields
+    -----------------
+    task                  : 1-based task index (for readability).
+    freeze_ratio          : --freeze_ratio hyperparameter.
+    freeze_subset         : --freeze_subset hyperparameter.
+    total_heads           : Total number of attention heads in the model
+                            (12 layers × 12 heads = 144 for ViT-B/16).
+    new_frozen_count      : Number of heads newly frozen after this task.
+    all_frozen_count      : Cumulative number of frozen heads up to this task.
+    frozen_pct            : Percentage of all heads that are frozen.
+    new_frozen_heads      : Sorted list of newly frozen head keys ("LxHy").
+    top10_heads_by_score  : Top-10 heads ranked by cumulative importance score.
+    all_scores_by_task    : All 144 head scores for every task seen so far,
+                            keyed as {"task_1": {"L0H0": score, ...}, ...}.
+                            Scores are per-task (not cumulative) and
+                            L2-normalised within each layer (as computed by
+                            calculate_head_importance with normalize=True).
+    all_scores_cumulative : Sum of per-task scores across all tasks so far,
+                            keyed as {"L0H0": cumulative_score, ...}.
+                            in descending order
+                            This is the ranking signal used for freezing.
+
+    Args:
+        log_dir               : Target directory. Empty string = no writing.
+        taskid                : 0-based task index.
+        freeze_ratio          : --freeze_ratio hyperparameter.
+        freeze_subset         : --freeze_subset hyperparameter.
+        new_frozen            : Set of newly frozen (layer, head) pairs.
+        all_frozen            : Cumulative set of all frozen heads.
+        total_heads           : Total number of heads in the model.
+        task_importance_scores: {task_id: {(layer, head): score}} for all tasks.
+    """
+    if not log_dir:
+        return
+
+    log_path = Path(log_dir) / "head_freeze_scores.json"
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Load existing entries if the file already exists.
+    existing: list = []
+    if log_path.exists():
+        with open(log_path, "r") as f:
+            existing = json.load(f)
+
+    # --- Cumulative scores across all tasks seen so far ---
+    # Maps "LxHy" -> sum of per-task importance scores.
+    all_scores_flat: dict = {}
+    for t_scores in task_importance_scores.values():
+        for (layer_idx, head_idx), score in t_scores.items():
+            key = f"L{layer_idx}H{head_idx}"
+            all_scores_flat[key] = all_scores_flat.get(key, 0.0) + score
+
+    # Top-10 heads by cumulative score for this task snapshot.
+    top10 = sorted(all_scores_flat.items(), key=lambda x: x[1], reverse=True)[:10]
+
+    # --- Per-task scores for ALL 144 heads ---
+    # Outer key: "task_N" (1-based). Inner key: "LxHy". Value: score (float).
+    # This allows downstream analysis of how individual head scores evolve
+    # across tasks without having to re-run importance estimation.
+    all_scores_by_task = {
+        f"task_{t + 1}": {
+            f"L{layer_idx}H{head_idx}": round(score, 6)
+            for (layer_idx, head_idx), score in t_scores.items()
+        }
+        for t, t_scores in task_importance_scores.items()
+    }
+
+    # Build the entry for this task.
+    entry = {
+        "task":             taskid + 1,          # 1-based for readability
+        "freeze_ratio":     freeze_ratio,
+        "freeze_subset":    freeze_subset,
+        "total_heads":      total_heads,
+        "new_frozen_count": len(new_frozen),
+        "all_frozen_count": len(all_frozen),
+        "frozen_pct":       round(len(all_frozen) / total_heads * 100, 2),
+        # Newly frozen heads as a sorted list of "LxHy" strings.
+        "new_frozen_heads": sorted(f"L{l}H{h}" for l, h in new_frozen),
+        # Top-10 heads by cumulative importance score.
+        "top10_heads_by_score": [
+            {"head": k, "cumulative_score": round(v, 6)} for k, v in top10
+        ],
+        # All 144 per-task scores (not cumulative), one sub-dict per task.
+        "all_scores_by_task": all_scores_by_task,
+        # Cumulative score of all 144 heads up to and including this task.
+        # This is the exact ranking signal used by freeze_attention_heads_for_tasks.
+        "all_scores_cumulative": {
+            k: round(v, 6) 
+            for k, v in sorted(all_scores_flat.items(), key=lambda x: x[1], reverse=True)
+
+        },
+    }
+
+    existing.append(entry)
+
+    # Atomic write: write to .tmp first, then rename —
+    # no half-written JSON is left on disk if the process crashes mid-write.
+    tmp_path = log_path.with_suffix(".tmp")
+    with open(tmp_path, "w") as f:
+        json.dump(existing, f, indent=2)
+    tmp_path.replace(log_path)
 
 
 def train_one_task(GVM: GlobalVarsManager, taskid: int, task_classes: list[int], model: VisionTransformer, **kwargs) -> VisionTransformer:
