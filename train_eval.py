@@ -106,6 +106,15 @@ def get_args():
     if args.optimizer not in ('mod_adam', 'sgd', 'adam'):
         raise NotImplementedError(args.optimizer)
 
+    # Validate method selection: the head-freeze baseline must run with plain Adam, not ModAdam, otherwise ARCL masking and head-freezing run together.
+    #and we do not allow sgd for comparability reasons 
+    # compare ARCL (modAdam) with head-freezing (adam)
+    if args.head_freeze and args.optimizer != 'adam':
+        raise ValueError(
+            "--head_freeze is the Michel-style baseline and must use "
+            "--optimizer adam. Combining it with mod_adam runs ARCL and "
+            "head-freezing simultaneously; remove one of the two flags."
+        )
     return args
 
 
