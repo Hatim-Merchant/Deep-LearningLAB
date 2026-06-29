@@ -366,6 +366,74 @@ def train_one_task(GVM: GlobalVarsManager, taskid: int, task_classes: list[int],
     if args.optimizer == 'mod_adam':
         GVM.cache_dict['old_avg_attn_map'] = GVM.cache_dict['avg_attn_map'].clone().detach() / GVM.cache_dict['temp_count']
 
+    # Head-freeze method: after the task is fully trained, compute per-head
+    # importance scores on the task dataset and select the top-scoring heads
+    # to freeze for all subsequent tasks. Cumulative: previously frozen heads
+    # are never unfrozen (monotonic freezing). task_classes=None because the
+    # dataset labels already match the model head layout at this point.
+    if args.head_freeze:
+        prev_frozen = GVM.cache_dict.setdefault('frozen_heads', set())
+        GVM.cache_dict.setdefault('task_importance_scores', {})
+
+        # 1) compute I_h = E_x |Att_h(x)^T * dL/dAtt_h(x)| for this task
+        scores = calculate_head_importance(
+            model, dataset, batch_size=args.batch_size, device='cuda',
+            subset_size=args.freeze_subset,
+            task_classes=None,          # labels already in [0, n_classes)
+            disable_progress_bar=not args.show_bar,
+        )
+        GVM.cache_dict['task_importance_scores'][taskid] = scores
+
+        # 2) pick the top freeze_ratio fraction of heads across all seen tasks
+        new_frozen = freeze_attention_heads_for_tasks(
+            model, GVM.cache_dict['task_importance_scores'],
+            freeze_ratio=args.freeze_ratio, already_frozen=prev_frozen,
+        )
+        GVM.cache_dict['frozen_heads'] = prev_frozen | new_frozen
+
+        # 3) build gradient masks + weight snapshots for the updated frozen set
+        build_head_freezing_mask(model, GVM.cache_dict['frozen_heads'])
+
+        total_heads = len(model.blocks) * model.blocks[0].attn.num_heads
+
+        # --- Terminal-Logging ---
+        # Compute cumulative score per head across all tasks seen so far,
+        # to print the top-5 heads by importance to the terminal.
+        all_scores_flat: dict = {}
+        for t_scores in GVM.cache_dict['task_importance_scores'].values():
+            for (layer_idx, head_idx), score in t_scores.items():
+                key = (layer_idx, head_idx)
+                all_scores_flat[key] = all_scores_flat.get(key, 0.0) + score
+
+        top5 = sorted(all_scores_flat.items(), key=lambda x: x[1], reverse=True)[:5]
+
+        print(
+            f":: [head_freeze] task {taskid + 1} summary\n"
+            f"::   freeze_ratio   = {args.freeze_ratio}  |  "
+            f"freeze_subset = {args.freeze_subset}\n"
+            f"::   new frozen     = +{len(new_frozen)} heads  |  "
+            f"total frozen = {len(GVM.cache_dict['frozen_heads'])}/{total_heads} "
+            f"({len(GVM.cache_dict['frozen_heads']) / total_heads * 100:.1f}%)\n"
+            f"::   newly frozen heads : "
+            + ", ".join(f"L{l}H{h}" for l, h in sorted(new_frozen)) + "\n"
+            + f"::   top-5 by cum. score: "
+            + ", ".join(f"L{l}H{h}={s:.4f}" for (l, h), s in top5)
+        )
+
+        # --- JSON-Logging ---
+        # Writes one entry per task to <log_dir>/head_freeze_scores.json.
+        # No writing if --log_dir is not set (empty string).
+        _log_head_freeze_json(
+            log_dir=args.log_dir,
+            taskid=taskid,
+            freeze_ratio=args.freeze_ratio,
+            freeze_subset=args.freeze_subset,
+            new_frozen=new_frozen,
+            all_frozen=GVM.cache_dict['frozen_heads'],
+            total_heads=total_heads,
+            task_importance_scores=GVM.cache_dict['task_importance_scores'],
+        )
+
     _save_chekpoint(GVM, taskid, model)
 
     if args.refine_head or args.use_ncm:
