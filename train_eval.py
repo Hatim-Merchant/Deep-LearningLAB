@@ -2,8 +2,10 @@ import os
 os.environ['TIMM_FUSED_ATTN'] = '0' if 'TIMM_FUSED_ATTN' not in os.environ else os.environ['TIMM_FUSED_ATTN']
 from time import time as ttime
 import argparse
+import json
 import random
 from collections import OrderedDict
+from pathlib import Path
 import tqdm
 from typing import Literal
 from copy import deepcopy
@@ -24,6 +26,7 @@ from utils.dataset_builder import define_dataset
 from utils import misc
 from utils.gvm import GlobalVarsManager
 from utils.trainer import train_one_epoch
+from utils.head_freeze import calculate_head_importance, freeze_attention_heads_for_tasks, build_head_freezing_mask
 
 torch.set_float32_matmul_precision("high")
 
@@ -73,6 +76,10 @@ def get_args():
     parser.add_argument('--lr_scale', type=float, default=0.01)
     parser.add_argument('--lr_scale_patterns', type=str, nargs='+', default='qkv')
     parser.add_argument('--optimizer', type=str, default='mod_adam')
+    # Head-freezing options (Michel-style)
+    parser.add_argument('--head_freeze', action='store_true', help='freeze the most-important heads for CL')
+    parser.add_argument('--freeze_ratio', type=float, default=0.1, help='fraction of ALL heads frozen per task (cumulative)')
+    parser.add_argument('--freeze_subset', type=float, default=0.2, help='fraction (<=1) or count of task samples for importance')
     parser.add_argument('--weight_decay', type=float, default=5e-5)
     parser.add_argument('--lr_sch', type=str, default='multistep', choices=('cosine', 'step', 'multistep'))
     parser.add_argument('--warmup_epochs', type=int, default=0)
