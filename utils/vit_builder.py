@@ -74,7 +74,7 @@ class IntermReader(nn.Module):
         return f"dst_param_id={self.dst_param_id}, module_name={self.module_name}"
 
 
-class Attention(nn.Module):
+""" class Attention(nn.Module):
     fused_attn: Final[bool]
 
     def __init__(
@@ -147,7 +147,90 @@ class Attention(nn.Module):
         x = self.proj(x)
         x = self.proj_drop(x)
         return x
+"""
+class Attention(nn.Module):
+    fused_attn: Final[bool]
 
+    def __init__(
+            self,
+            dim: int,
+            num_heads: int = 8,
+            qkv_bias: bool = False,
+            qk_norm: bool = False,
+            attn_drop: float = 0.,
+            proj_drop: float = 0.,
+            norm_layer: nn.Module = nn.LayerNorm,
+            **kwargs
+    ) -> None:
+        super().__init__()
+        assert dim % num_heads == 0, 'dim should be divisible by num_heads'
+        self.num_heads = num_heads
+        self.head_dim = dim // num_heads
+        self.scale = self.head_dim ** -0.5
+        self.fused_attn = use_fused_attn()
+
+        # One scalar gate per attention head.
+        # Normally frozen. We only enable gradients during head-importance analysis.
+        self.head_alpha = nn.Parameter(torch.ones(num_heads), requires_grad=False)
+
+        self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
+        self.q_norm = norm_layer(self.head_dim) if qk_norm else nn.Identity()
+        self.k_norm = norm_layer(self.head_dim) if qk_norm else nn.Identity()
+        if 'pid1' in kwargs and 'pid2' in kwargs:
+            self.interm_reader_1 = IntermReader(kwargs['pid1'], 'interm_reader_1', {'w_qkv': self.qkv.weight})
+            self.interm_reader_2 = IntermReader(kwargs['pid2'], 'interm_reader_2')
+        self.attn_drop = nn.Dropout(attn_drop)
+        self.proj = nn.Linear(dim, dim)
+        self.proj_drop = nn.Dropout(proj_drop)
+
+        assert attn_drop == 0.
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        training = GVM().training
+        if training:
+            self.input = x.type(torch.float16)
+        B, N, C = x.shape
+        qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, self.head_dim).permute(2, 0, 3, 1, 4)
+        q, k, v = qkv.unbind(0)  # [B, H, N, d] * 3
+        if training:
+            self.q = q.clone().detach()
+            self.k = k
+            self.v = v
+        q, k = self.q_norm(q), self.k_norm(k)
+
+        if self.fused_attn:
+            raise NotImplementedError()
+        else:
+            q = q * self.scale
+            if training:
+                self.q_scaled = q
+            attn = q @ k.transpose(-2, -1)
+            if training:
+                self.attn_no_softmax = attn
+                self.attn_no_softmax.requires_grad_()
+                self.attn_no_softmax.retain_grad()
+            attn = attn.softmax(dim=-1)
+            attn = self.attn_drop(attn)
+
+            x = attn @ v  # [B, H, N, head_dim]
+
+            # Apply per-head gate for gradient-based head importance.
+            # head_alpha shape: [H]
+            x = x * self.head_alpha.view(1, -1, 1, 1)
+
+        if training:
+            self.attn = attn
+            self.attn_ = attn.clone()
+            self.attn.requires_grad_()
+            self.attn.retain_grad()
+            self.out = x
+            self.out.requires_grad_()
+            self.out.retain_grad()
+
+        x = x.transpose(1, 2).reshape(B, N, C)
+        x = self.proj(x)
+        x = self.proj_drop(x)
+        return x
 
 class LayerScale(nn.Module):
     def __init__(
