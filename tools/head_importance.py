@@ -37,11 +37,12 @@ def freeze_except_head_alpha(model):
 
 def disable_head_alpha(model):
     """
-    Disable head_alpha gradients again after importance computation.
-    Reset all gates to 1.0 so the model behaves normally.
+    Disable head_alpha after diagnostic so it is not used by normal training.
+    Also clear gradients, otherwise ModAdam may still see old alpha gradients.
     """
     for module in get_attention_modules(model):
-        module.head_alpha.requires_grad = False
+        module.head_alpha.requires_grad_(False)
+        module.head_alpha.grad = None
         module.head_alpha.data.fill_(1.0)
 
 

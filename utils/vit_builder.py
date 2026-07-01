@@ -215,8 +215,12 @@ class Attention(nn.Module):
             x = attn @ v  # [B, H, N, head_dim]
 
             # Apply per-head gate for gradient-based head importance.
-            # head_alpha shape: [H]
-            x = x * self.head_alpha.view(1, -1, 1, 1)
+
+            # Match dtype/device so normal AttentionRetention training stays in float16.
+
+            head_alpha = self.head_alpha.view(1, -1, 1, 1).to(dtype=x.dtype, device=x.device)
+
+            x = x * head_alpha
 
         if training:
             self.attn = attn

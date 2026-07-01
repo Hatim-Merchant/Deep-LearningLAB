@@ -23,8 +23,14 @@ from utils.mod_adam import ModAdam
 from utils.dataset_builder import define_dataset
 from utils import misc
 from utils.gvm import GlobalVarsManager
-from utils.trainer import train_one_epoch
 
+from utils.trainer import train_one_epoch
+from tools.head_importance import (
+    compute_head_importance,
+    save_head_importance,
+    print_topk_heads,
+    disable_head_alpha,
+)
 torch.set_float32_matmul_precision("high")
 
 
@@ -194,6 +200,33 @@ def train_one_task(GVM: GlobalVarsManager, taskid: int, task_classes: list[int],
     dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.workers, pin_memory=True, timeout=args.timeout if args.workers > 0 else 0,
                             drop_last=args.prob_cutmixup > 0, persistent_workers=args.persistent_workers)
 
+    importance = compute_head_importance(
+    model=model,
+    dataloader=dataloader,
+    device=torch.device("cuda"),
+    num_batches=20,
+    )
+    save_head_importance(
+    importance,
+    output_path=f"outputs/head_importance_task_{taskid}.pt",
+    )
+    print_topk_heads(importance, k=6)
+    # Restore normal training mode after diagnostic.
+    
+    model = set_model_mode(
+        GVM,
+        model,
+        training=True,
+        training_string=GVM.cache_dict['training_string'],
+    )
+
+    model = modify_head(
+        GVM,
+        model,
+        training=True,
+        task_classes=task_classes,
+        )
+    disable_head_alpha(model)# head_alpha is only for diagnostic, not normal ARCL training
     criterion = nn.CrossEntropyLoss().cuda()
 
     if args.lr_scale == 1:
