@@ -41,6 +41,8 @@ from torch import nn
 from torch.utils.data import DataLoader, Dataset, RandomSampler
 from tqdm import tqdm
 
+import random
+
 # Type aliases for readability
 HeadKey = Tuple[int, int]                  # (layer_idx, head_idx)
 ImportanceDict = Dict[HeadKey, float]       # {(layer, head): score}
@@ -212,6 +214,8 @@ def freeze_attention_heads_for_tasks(
     task_importance_scores: Dict[int, ImportanceDict],
     freeze_ratio: float = 0.1,
     already_frozen: Optional[Set[HeadKey]] = None,
+    selection: str = "michel",
+    seed: Optional[int] = None,
 ) -> Set[HeadKey]:
     """Select the heads to freeze after the current task and return the new ones.
 
@@ -238,6 +242,8 @@ def freeze_attention_heads_for_tasks(
         freeze_ratio:           Fraction of ALL heads to newly freeze per call.
         already_frozen:         Set of (layer_idx, head_idx) already frozen;
                                 these are excluded from selection.
+        selection:              "michel" (importance-based) or "random" (to see if method "michel" is better than random selection).
+        seed:                   Optional RNG seed for reproducible random selection.
 
     Returns:
         Set of newly selected (layer_idx, head_idx) pairs to freeze.
@@ -256,18 +262,45 @@ def freeze_attention_heads_for_tasks(
     total_heads = num_layers * num_heads
     n_to_freeze = int(total_heads * freeze_ratio)
 
-    # Build a list of (head_key, summed_score) for candidates not yet frozen.
-    candidates = [
-        ((layer_idx, head_idx), sum(all_scores[(layer_idx, head_idx)]))
-        for layer_idx in range(num_layers)
-        for head_idx in range(num_heads)
-        if (layer_idx, head_idx) in all_scores
-        and (layer_idx, head_idx) not in already_frozen
-    ]
-    # Sort descending: highest cumulative importance first.
-    candidates.sort(key=lambda x: x[1], reverse=True)
+    if selection == "michel":
+        # Build a list of (head_key, summed_score) for candidates not yet frozen.
+        candidates = [
+            ((layer_idx, head_idx), sum(all_scores[(layer_idx, head_idx)]))
+            for layer_idx in range(num_layers)
+            for head_idx in range(num_heads)
+            if (layer_idx, head_idx) in all_scores
+            and (layer_idx, head_idx) not in already_frozen
+        ]
+        # Sort descending: highest cumulative importance first.
+        candidates.sort(key=lambda x: x[1], reverse=True)
 
-    new_frozen: Set[HeadKey] = {key for key, _ in candidates[:n_to_freeze]}
+        new_frozen: Set[HeadKey] = {key for key, _ in candidates[:n_to_freeze]}
+
+    elif selection == "random":
+        # Random baseline: freeze a random subset of the 12x12 head grid,
+        # ignoring the importance scores entirely. Every head that is not
+        # already frozen is an equally likely candidate. The scores are still
+        # computed upstream and logged, but they do NOT influence this choice.
+        candidate_keys = [
+            (layer_idx, head_idx)
+            for layer_idx in range(num_layers)
+            for head_idx in range(num_heads)
+            if (layer_idx, head_idx) not in already_frozen
+        ]
+        # Clamp so we never request more heads than remain available.
+        n_sample = min(n_to_freeze, len(candidate_keys))
+        # Dedicated RNG: reproducible and independent of the global RNG state
+        # consumed during training. Offsetting the seed by the number of tasks
+        # seen so far makes each task draw a different but deterministic subset.
+        rng = random.Random(
+            None if seed is None else seed + len(task_importance_scores)
+        )
+        new_frozen = set(rng.sample(candidate_keys, n_sample))
+
+    else:
+        raise ValueError(
+            f"Unknown head selection '{selection}'. Use 'michel' or 'random'."
+        )
     return new_frozen
 
 
