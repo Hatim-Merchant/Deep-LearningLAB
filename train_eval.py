@@ -27,6 +27,7 @@ from utils import misc
 from utils.gvm import GlobalVarsManager
 from utils.trainer import train_one_epoch
 from utils.head_freeze import calculate_head_importance, freeze_attention_heads_for_tasks, build_head_freezing_mask
+from utils.run_logger import RunLogger  # JSON metrics logger (metrics.json / config.json)
 
 torch.set_float32_matmul_precision("high")
 
@@ -98,6 +99,7 @@ def get_args():
     # Logging options
     parser.add_argument('--log_dir', type=str, default='',
                         help='Directory for head-freeze JSON log. '
+                             '(metrics.json, config.json, and -- if --head_freeze '
                              'Empty string = no JSON written.')
 
     args = parser.parse_args()
@@ -370,6 +372,8 @@ def train_one_task(GVM: GlobalVarsManager, taskid: int, task_classes: list[int],
         if epoch > 0:
             _epoch_scalar_str = train_one_epoch(GVM, epoch, dataloader, model, criterion, optimizer)
             print(f"Task [{taskid + 1:>{len(_ntstr)}}/{_ntstr}] Epoch [{epoch:>{len(_nestr := str(args.epochs))}}/{_nestr}]:: {_epoch_scalar_str}")
+            # JSON logging: record the same epoch scalars that were just printed.
+            GVM.cache_dict['run_logger'].log_training_epoch(taskid, epoch, GVM.cache_dict['last_epoch_metrics'])
         scheduler.step(epoch)
     if args.optimizer == 'mod_adam':
         GVM.cache_dict['old_avg_attn_map'] = GVM.cache_dict['avg_attn_map'].clone().detach() / GVM.cache_dict['temp_count']
@@ -498,6 +502,9 @@ def evaluate_one_task(GVM: GlobalVarsManager, train_taskid: int, eval_taskid: in
 
     result_dict['num_samples'] = len(dataset)
 
+    # JSON logging: record the evaluation result just printed for this task pair.
+    GVM.cache_dict['run_logger'].log_evaluation(train_taskid, eval_taskid, result_dict)
+
     return result_dict
 
 
@@ -537,6 +544,8 @@ def task_ending_info(GVM: GlobalVarsManager):
     print(f":: ** Results of task [{current_taskid + 1}]: [ {_formatter(**acc_info_dict)} ] **")
     print(f":: ** Time so far: {misc.format_duration(ttime() - GVM.cache_dict['exp_start_time'])} **")
 
+    # JSON logging: record the end-of-task metric summary just printed.
+    GVM.cache_dict['run_logger'].log_task_end(current_taskid, acc_info_dict)
 
 def find_not_pretrained_params(model: VisionTransformer, pretrained: bool = True, pretrained_cfg: dict[str, str] = None, extra_pretrained_params: list[str] = []) -> list[str]:
     assert isinstance(extra_pretrained_params, (list, tuple))
@@ -763,6 +772,14 @@ if __name__ == "__main__":
 
     GVM.cache_dict['exp_start_time'] = ttime()
 
+    # JSON run logging: mirror the terminal metrics into <log_dir>/metrics.json
+    # and write the full run configuration to <log_dir>/config.json. This is a
+    # no-op when --log_dir is empty and is independent of --head_freeze so that
+    # both training methods produce comparable metric files.
+    run_logger = RunLogger(args.log_dir)
+    run_logger.log_config(vars(args))
+    GVM.cache_dict['run_logger'] = run_logger
+
     for taskid, current_task_classes in GVM.cl_mngr:
         print(f"{'#' * 90} Task: [{taskid + 1}/{GVM.cl_mngr.num_tasks}] {'#' * 90}")
 
@@ -789,4 +806,13 @@ if __name__ == "__main__":
                 continue
 
         evaluate_tasks_sofar(GVM, taskid, model)
-        task_ending_info(GVM)
+        task_ending_info(GVM)#
+    # JSON logging: persist the final accuracy matrices / lists for the whole
+    # run under the "final" key of metrics.json (numpy arrays are converted to
+    # nested lists by the logger).
+    GVM.cache_dict['run_logger'].log_final({
+        "acc_task_inc_mat":   GVM.acc_mat_dict['AccTaskIncMat'],
+        "acc_class_inc_mat":  GVM.acc_mat_dict['AccClassIncMat'],
+        "acc_task_inc_list":  GVM.acc_mat_dict['AccTaskIncList'],
+        "acc_class_inc_list": GVM.acc_mat_dict['AccClassIncList'],
+    })

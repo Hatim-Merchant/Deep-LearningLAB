@@ -202,7 +202,12 @@ def train_one_epoch(GVM: GlobalVarsManager, curr_epoch: int, dataloader: DataLoa
                 GVM.cache_dict['avg_attn_map'] += temp
                 GVM.cache_dict['temp_count'] += 1
 
-    _epoch_scalar_str = scalar_meter.format_outout(scalar_meter.update_epoch_average_value())
+    # Compute the epoch-averaged scalars once, format them for the console, and
+    # stash the raw dict on GVM so train_eval can mirror it into metrics.json.
+    _epoch_metrics = scalar_meter.update_epoch_average_value()
+    _epoch_scalar_str = scalar_meter.format_outout(_epoch_metrics)
+    GVM.cache_dict['last_epoch_metrics'] = _epoch_metrics  # side-channel for JSON logging
+
 
     return _epoch_scalar_str
 
