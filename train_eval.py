@@ -338,6 +338,11 @@ def train_one_task(GVM: GlobalVarsManager, taskid: int, task_classes: list[int],
         if resumed_taskid == taskid:
             start_epoch = resumed_epoch + 1
             print(f"[Checkpoint] Resuming task {taskid} from epoch {start_epoch}")
+            
+        if start_epoch > args.epochs:
+            print(f"[Checkpoint] Task {taskid} already completed. Skipping remaining training.")
+            GVM.cache_dict["skip_eval"] = True
+            return model
 
     print(":: Training:")
     for epoch in range(start_epoch, args.epochs + 1):
@@ -357,7 +362,7 @@ def train_one_task(GVM: GlobalVarsManager, taskid: int, task_classes: list[int],
 
         scheduler.step(epoch)
 
-    scheduler.step(epoch)
+    
     GVM.cache_dict['old_avg_attn_map'] = GVM.cache_dict['avg_attn_map'].clone().detach() / GVM.cache_dict['temp_count']
 
     _save_chekpoint(GVM, taskid, model)
