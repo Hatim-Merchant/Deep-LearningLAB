@@ -1,3 +1,4 @@
+
 import os
 os.environ['TIMM_FUSED_ATTN'] = '0' if 'TIMM_FUSED_ATTN' not in os.environ else os.environ['TIMM_FUSED_ATTN']
 from time import time as ttime
@@ -31,6 +32,55 @@ from tools.head_importance import (
     print_topk_heads,
     disable_head_alpha,
 )
+def save_checkpoint(path, model, optimizer, scheduler, taskid, epoch, GVM):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+
+    checkpoint = {
+        "model": model.state_dict(),
+        "optimizer": optimizer.state_dict() if optimizer is not None else None,
+        "scheduler": scheduler.state_dict() if scheduler is not None else None,
+        "taskid": taskid,
+        "epoch": epoch,
+        "cache_dict": GVM.cache_dict,
+        "param_dict": GVM.param_dict,
+        "acc_mat_dict": GVM.acc_mat_dict,
+    }
+
+    torch.save(checkpoint, path)
+
+    print(f"[Checkpoint] Saved to {path}")
+
+
+def load_checkpoint(path, model, optimizer=None, scheduler=None, GVM=None):
+    checkpoint = torch.load(path, map_location="cuda")
+
+    model.load_state_dict(checkpoint["model"], strict=False)
+
+    if optimizer is not None and checkpoint.get("optimizer") is not None:
+        optimizer.load_state_dict(checkpoint["optimizer"])
+
+    if scheduler is not None and checkpoint.get("scheduler") is not None:
+        scheduler.load_state_dict(checkpoint["scheduler"])
+
+    if GVM is not None:
+        if checkpoint.get("cache_dict") is not None:
+            GVM.cache_dict.update(checkpoint["cache_dict"])
+
+        if checkpoint.get("param_dict") is not None:
+            GVM.param_dict.update(checkpoint["param_dict"])
+
+        if checkpoint.get("acc_mat_dict") is not None:
+            GVM.acc_mat_dict.update(checkpoint["acc_mat_dict"])
+
+    taskid = checkpoint["taskid"]
+    epoch = checkpoint["epoch"]
+
+    print(f"[Checkpoint] Loaded from {path}")
+    print(f"[Checkpoint] Resume from task {taskid}, epoch {epoch + 1}")
+
+    return taskid, epoch
+
+
 torch.set_float32_matmul_precision("high")
 
 
@@ -41,7 +91,7 @@ def get_args():
     parser.add_argument('-dr', '--data_root', type=str, default="")
     parser.add_argument('-t', '--num_tasks', type=int, default=10, choices=(1, 2, 5, 10, 20, 25, 50, 100))
     parser.add_argument('--shuffle_classes', type=misc.str2bool, default=True)
-    parser.add_argument('--resume', type=str, default="")
+   # parser.add_argument('--resume', type=str, default="")
     parser.add_argument('--seed', type=int, default=2025)
     # Model options
     parser.add_argument('-m', '--model', type=str, default='vit_base_patch16_224.augreg_in21k', help='vit_base_patch16_224.augreg_in21k')
@@ -89,6 +139,9 @@ def get_args():
     # Display options
     parser.add_argument('--show_bar', action='store_true')
     parser.add_argument('--print_model', action='store_true')
+    #checkpoint options
+    parser.add_argument("--resume", type=str, default="", help="Path to checkpoint to resume from")
+    parser.add_argument("--checkpoint_path", type=str, default="checkpoints/latest.pt", help="Where to save checkpoint")
 
     args = parser.parse_args()
 
@@ -151,6 +204,9 @@ def set_learning_rates(GVM: GlobalVarsManager, model: VisionTransformer, base_lr
     lr_param_dict = {_p['lr']: [] for _p in param_lr_groups}
 
     for n, p in model.named_parameters():
+        if "head_alpha" in n:
+            continue
+
         if p.requires_grad:
             _group_idx = 1 if any(_s in n for _s in lr_scale_patterns) else 0
             param_lr_groups[_group_idx]['params'].append(p)
@@ -184,6 +240,17 @@ def _save_chekpoint(GVM: GlobalVarsManager, taskid: int, model: VisionTransforme
 
 def train_one_task(GVM: GlobalVarsManager, taskid: int, task_classes: list[int], model: VisionTransformer, **kwargs) -> VisionTransformer:
     args = GVM.args
+    GVM.cache_dict["skip_eval"] = False
+
+    if args.resume != "" and os.path.exists(args.resume):
+        ckpt = torch.load(args.resume, map_location="cuda")
+        resumed_taskid = ckpt["taskid"]
+
+        if resumed_taskid > taskid:
+            print(f"[Checkpoint] Task {taskid} already finished. Skipping training and evaluation.")
+            GVM.cache_dict["skip_eval"] = True
+            return model
+
     if args.epochs == 0:
         if args.use_ncm:
             extract_class_features(GVM, model)
@@ -230,7 +297,10 @@ def train_one_task(GVM: GlobalVarsManager, taskid: int, task_classes: list[int],
     criterion = nn.CrossEntropyLoss().cuda()
 
     if args.lr_scale == 1:
-        param_groups = filter(lambda p: p.requires_grad, model.parameters())
+        param_groups = [
+            p for name, p in model.named_parameters()
+            if p.requires_grad and "head_alpha" not in name
+    ]
     else:
         param_groups = set_learning_rates(GVM, model, args.lr, args.lr_scale, args.lr_scale_patterns)
 
@@ -250,12 +320,44 @@ def train_one_task(GVM: GlobalVarsManager, taskid: int, task_classes: list[int],
                                                 decay_rate=args.decay_rate, min_lr=args.min_lr, warmup_epochs=args.warmup_epochs, warmup_lr=args.min_lr)
     assert num_epochs == args.epochs
 
+    start_epoch = 0
+
+    if args.resume != "":
+        resumed_taskid, resumed_epoch = load_checkpoint(
+            args.resume,
+            model=model,
+            optimizer=optimizer,
+            scheduler=scheduler,
+            GVM=GVM,
+        )
+
+        if resumed_taskid > taskid:
+            print(f"[Checkpoint] Task {taskid} already finished. Skipping.")
+            return model
+
+        if resumed_taskid == taskid:
+            start_epoch = resumed_epoch + 1
+            print(f"[Checkpoint] Resuming task {taskid} from epoch {start_epoch}")
+
     print(":: Training:")
-    for epoch in range(0, args.epochs + 1):
+    for epoch in range(start_epoch, args.epochs + 1):
         if epoch > 0:
             _epoch_scalar_str = train_one_epoch(GVM, epoch, dataloader, model, criterion, optimizer)
             print(f"Task [{taskid + 1:>{len(_ntstr)}}/{_ntstr}] Epoch [{epoch:>{len(_nestr := str(args.epochs))}}/{_nestr}]:: {_epoch_scalar_str}")
+
+            save_checkpoint(
+                path=args.checkpoint_path,
+                model=model,
+                optimizer=optimizer,
+                scheduler=scheduler,
+                taskid=taskid,
+                epoch=epoch,
+                GVM=GVM,
+            )
+
         scheduler.step(epoch)
+
+    scheduler.step(epoch)
     GVM.cache_dict['old_avg_attn_map'] = GVM.cache_dict['avg_attn_map'].clone().detach() / GVM.cache_dict['temp_count']
 
     _save_chekpoint(GVM, taskid, model)
@@ -595,6 +697,9 @@ if __name__ == "__main__":
         GVM.training = True
         model = train_one_task(GVM, taskid, current_task_classes, model)
         GVM.training = False
+
+        if GVM.cache_dict.get("skip_eval", False):
+            continue
 
         if args.only_last_metric:
             if taskid + 1 < GVM.cl_mngr.num_tasks:
