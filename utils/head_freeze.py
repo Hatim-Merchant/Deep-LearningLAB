@@ -233,7 +233,6 @@ def freeze_attention_heads_for_tasks(
         freeze_ratio=0.1  -> 14 new heads per task  (safe for 10-split)
         freeze_ratio=0.3  -> 43 new heads per task  (100% frozen after ~3 tasks)
         Use a small ratio for long task sequences.
-
     Args:
         model:                  timm VisionTransformer (used only to read the
                                 number of layers and heads).
@@ -242,7 +241,9 @@ def freeze_attention_heads_for_tasks(
         freeze_ratio:           Fraction of ALL heads to newly freeze per call.
         already_frozen:         Set of (layer_idx, head_idx) already frozen;
                                 these are excluded from selection.
-        selection:              "michel" (importance-based) or "random" (to see if method "michel" is better than random selection).
+        selection:              "michel" (cumulative importance summed across
+                                        all tasks), "michel_current" (importance of the
+                                        just-finished task only), or "random".
         seed:                   Optional RNG seed for reproducible random selection.
 
     Returns:
@@ -275,6 +276,24 @@ def freeze_attention_heads_for_tasks(
         candidates.sort(key=lambda x: x[1], reverse=True)
 
         new_frozen: Set[HeadKey] = {key for key, _ in candidates[:n_to_freeze]}
+
+    elif selection == "michel_current":
+            # Task-specific variant: freeze the heads most important for the task
+            # that just finished, not the cumulative top heads across all tasks.
+            # Rationale: protect each task's specialist heads from being overwritten
+            # by later tasks. task_importance_scores is insertion-ordered by task,
+            # so its last value belongs to the current task.
+            current_scores = next(reversed(task_importance_scores.values()))
+            candidates = [
+                ((layer_idx, head_idx), current_scores[(layer_idx, head_idx)])
+                for layer_idx in range(num_layers)
+                for head_idx in range(num_heads)
+                if (layer_idx, head_idx) in current_scores
+                and (layer_idx, head_idx) not in already_frozen
+            ]
+            # Sort descending: highest current-task importance first.
+            candidates.sort(key=lambda x: x[1], reverse=True)
+            new_frozen = {key for key, _ in candidates[:n_to_freeze]}
 
     elif selection == "random":
         # Random baseline: freeze a random subset of the 12x12 head grid,

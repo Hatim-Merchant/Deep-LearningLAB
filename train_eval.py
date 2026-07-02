@@ -81,9 +81,10 @@ def get_args():
     parser.add_argument('--head_freeze', action='store_true', help='freeze the most-important heads for CL')
     parser.add_argument('--freeze_ratio', type=float, default=0.1, help='fraction of ALL heads frozen per task (cumulative)')
     parser.add_argument('--freeze_subset', type=float, default=0.2, help='fraction (<=1) or count of task samples for importance')
-    parser.add_argument('--head_selection', type=str, default='michel', choices=('michel', 'random'),
+    parser.add_argument('--head_selection', type=str, default='michel', choices=('michel', 'michel_current', 'random'),
                             help='how frozen heads are chosen when --head_freeze is set: '
                                 '"michel" = highest cumulative importance; '
+                                'michel_current" = highest importance for the just-finished task; '
                                 '"random" = random subset of all 144 heads (importance ignored)')
 
     parser.add_argument('--weight_decay', type=float, default=5e-5)
