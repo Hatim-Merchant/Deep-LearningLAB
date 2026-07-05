@@ -318,7 +318,7 @@ def freeze_attention_heads_for_tasks(
 
     else:
         raise ValueError(
-            f"Unknown head selection '{selection}'. Use 'michel' or 'random'."
+            f"Unknown head selection '{selection}'. Use 'michel', 'michel_current' or 'random'."
         )
     return new_frozen
 
