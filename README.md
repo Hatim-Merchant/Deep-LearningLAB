@@ -34,3 +34,49 @@ pip install -r requirements.txt
 python load_data_on_gpu_cluster.py
 6. Run the baseline  
 bash train_cifar100.sh
+
+
+## Quick Start for gradient-head-importance
+
+1. Create a virtual environment (Python 3.11)
+
+```bash
+python3.11 -m venv .venv
+```
+
+2. Activate the environment
+
+```bash
+source .venv/bin/activate
+```
+
+3. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+4. Download CIFAR-100
+
+```bash
+python load_data_on_gpu_cluster.py
+```
+
+5. Run training
+
+```bash
+bash train_cifar100.sh
+```
+
+## Outputs
+
+During training, the following are generated:
+
+- `outputs/head_importance_task_*.pt` – 12×12 head importance matrices
+- `outputs/head_importance_heatmaps/` – Heatmaps for each task
+
+To generate heatmaps:
+
+```bash
+python tools/plot_head_importance.py
+```
