@@ -32,8 +32,14 @@ conda activate your_env_name
 pip install -r requirements.txt
 4. Load CIFAR-100  
 python load_data_on_gpu_cluster.py
-6. Run the baseline  
+6. Run the state of the art  
 bash train_cifar100.sh
+7. Run our methods, random freezing and no freezing (adjust parameters to your needs)  
+bash 1train_freeze_michel.sh  
+bash 2train_freeze_michel_current.sh  
+bash 3train_freeze_random.sh  
+bash 4train_freeze_no_heads.sh  
+
 
 
 ## Quick Start for gradient-head-importance
