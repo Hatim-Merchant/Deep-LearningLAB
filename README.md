@@ -60,7 +60,7 @@ Task 10 → Evaluate
 This setup allows us to investigate whether retaining important attention heads helps preserve knowledge from earlier tasks.
 
 ## Repository Structure
-
+```
 Deep-LearningLAB/
 │
 ├── train_eval.py
@@ -89,7 +89,7 @@ Deep-LearningLAB/
 │
 └── requirements.txt
     └── Python dependencies
-
+```
 The repository currently provides training scripts for 10-split CIFAR-100, 10-split ImageNet-R, 20-split ImageNet-R and 10-split DomainNet experiments. 
 
 ## Requirements
@@ -122,7 +122,7 @@ The project supports:
 Download the datasets from their respective sources and arrange them using the directory structure expected by the training pipeline.
 
 The expected structure is:
-
+```
 DATA_ROOT/
 ├── train/
 │   ├── class_1/
@@ -139,7 +139,7 @@ DATA_ROOT/
     ├── class_2/
     │   └── ...
     └── ...
-
+```
 Dataset-specific preprocessing scripts are available in the tools/ directory. The dataset root paths should be updated in those scripts before running them. (⁠GitHub)
 
 ## Running Experiments
@@ -161,6 +161,7 @@ The training scripts expose the dataset location through the --data_root argumen
 The main implementation is contained in train_eval.py.
 
 At a high level, the training process is:
+```
 
               ┌─────────────────────┐
               │   Current Task      │
@@ -198,7 +199,7 @@ At a high level, the training process is:
               ┌─────────────────────┐
               │      Next Task      │
               └─────────────────────┘
-
+```
 ## Experimental Goal
 
 The main research question is:
