@@ -38,16 +38,6 @@ The continual-learning pipeline is organized around the following procedure:
 
 The gradient-based importance score provides a way of estimating how strongly each attention head contributes to the current objective.
 
-## Attention-head representation
-
-For a Vision Transformer with L layers and H heads per layer, each attention head corresponds to a subset of the query, key, and value projections.
-
-For ViT-B/16:
-
-L = 12,\qquad H = 12,\qquad L \times H = 144
-
-The implementation operates on the attention parameters and uses their gradients to derive head-level importance.
-
 ## Continual Learning Setup
 
 The experiments divide datasets into multiple sequential tasks.
@@ -100,7 +90,7 @@ Deep-LearningLAB/
 └── requirements.txt
     └── Python dependencies
 
-The repository currently provides training scripts for 10-split CIFAR-100, 10-split ImageNet-R, 20-split ImageNet-R, and 10-split DomainNet experiments. (⁠GitHub)
+The repository currently provides training scripts for 10-split CIFAR-100, 10-split ImageNet-R, 20-split ImageNet-R and 10-split DomainNet experiments. 
 
 ## Requirements
 
