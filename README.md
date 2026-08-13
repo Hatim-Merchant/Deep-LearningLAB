@@ -244,12 +244,22 @@ This project applies the idea specifically to continual learning with Vision Tra
 
 If you use this repository or the associated implementation, please cite the original Attention Retention work:
 
+
+
+```bibtex
+
 @inproceedings{lu2026arcl,
+
   title     = {Attention Retention for Continual Learning with Vision Transformers},
+
   author    = {Lu, Yue and Zhou, Xiangyu and Zhang, Shizhou and Xing, Yinghui and Liang, Guoqiang and Zhang, Wencong},
+
   booktitle = {Proceedings of the AAAI Conference on Artificial Intelligence},
+
   year      = {2026}
+
 }
+```
 
 ## Acknowledgements
 
