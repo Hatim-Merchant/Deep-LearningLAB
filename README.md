@@ -1,168 +1,85 @@
+<div align="center">
+
 # Attention Retention for Continual Learning with Vision Transformers
 
-This repository contains the implementation and experimental code for studying attention-head importance in Vision Transformers (ViTs) for continual learning.
+[![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)](https://python.org)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.1.0-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org)
+[![License](https://img.shields.io/badge/License-MIT-green.svg?labelColor=gray)](LICENSE)
+[![Timm](https://img.shields.io/badge/timm-0.9.12-1a1a2e)](https://github.com/rwightman/pytorch-image-models)
 
-The project investigates whether identifying and retaining important attention heads can help a Vision Transformer preserve previously learned knowledge while learning a sequence of new tasks.
+🚀 Investigating whether identifying and retaining important attention heads can help Vision Transformers preserve knowledge during continual learning. 🚀
 
-The main experiments use ViT-B/16 in a class-incremental learning setting and estimate attention-head importance using gradient-based scores.
+</div>
+
+---
+
+This repository contains the implementation and experimental code for studying attention‑head importance in Vision Transformers (ViTs) for continual learning. The project explores a simple yet effective idea: estimate the importance of each self‑attention head using gradient‑based scores, then freeze the most important heads when learning new tasks to mitigate catastrophic forgetting.
+
+**Key features:**
+- Gradient‑based importance scoring for attention heads in ViT‑B/16.
+- Class‑incremental learning setup on CIFAR‑100, ImageNet‑R, and DomainNet.
+- Support for multiple task splits (10, 20 tasks).
+- Scripts for dataset preparation, training, and evaluation.
+
+---
+
+## Installation
+
+This project uses Python 3.11 and depends on the libraries listed in `requirements.txt`. To set up the environment, run:
+
+```bash
+pip install -r requirements.txt
+```
+
+We recommend using a virtual environment (e.g., `venv` or `conda`) to isolate dependencies.
+
+---
+
+## Usage
+
+The main training and evaluation script is `train_eval.py`. For a quick start with the CIFAR‑100 experiment:
+
+```bash
+bash train_cifar100.sh
+```
+
+Before running any script, update the dataset root path in the script (e.g., `--data_root /path/to/dataset`). You can also change the random seed with `--seed`.
+
+To see all available command‑line arguments:
+
+```bash
+python train_eval.py --help
+```
+
+---
 
 ## Overview
 
-Vision Transformers contain multiple self-attention heads in every Transformer layer. While all heads contribute to the model, their contribution to a particular task is not necessarily equal.
+The project is built with the following key libraries:
 
-In continual learning, updating the entire model for every new task can lead to catastrophic forgetting of previously learned knowledge.
+- **PyTorch** and **Torchvision** – for model definition, data loading, and training.
+- **timm** – provides the Vision Transformer implementation (ViT‑B/16).
+- **NumPy / SciPy** – for numerical computations and gradient analysis.
+- **Einops** – for tensor operations.
+- **tqdm** – for progress bars.
 
-This project therefore explores a simple idea:
+The code is organized to support multiple datasets and task splits, making it easy to extend to other continual‑learning scenarios.
 
-Identify the attention heads that are most important for the current task and retain/freeze them while learning subsequent tasks.
-
-For ViT-B/16, the model contains:
-
-* 12 Transformer layers
-* 12 attention heads per layer
-* 144 attention heads in total
-
-The importance of individual heads is estimated from their gradients and used to determine which heads should be retained.
+---
 
 ## Method
 
-The continual-learning pipeline is organized around the following procedure:
+Vision Transformers contain multiple self‑attention heads in every Transformer layer. While all heads contribute to the model, their contribution to a particular task is not necessarily equal. In continual learning, updating the entire model for every new task can lead to catastrophic forgetting. Our approach works as follows:
 
-1. Train the Vision Transformer on the current task.
-2. Compute an importance score for each attention head using gradients.
-3. Rank all attention heads according to their importance.
-4. Select the most important heads.
-5. Retain/freeze the selected heads when learning subsequent tasks.
-6. Continue training on the next task.
-7. Evaluate performance across the sequence of tasks.
+1. **Train** the ViT on the current task.
+2. **Compute** a gradient‑based importance score for each of the 144 attention heads (12 layers × 12 heads).
+3. **Rank** heads by importance and select the most important ones.
+4. **Freeze** the selected heads when learning subsequent tasks.
+5. **Proceed** to the next task and repeat the process, updating importance scores as needed.
 
-The gradient-based importance score provides a way of estimating how strongly each attention head contributes to the current objective.
+The pipeline is illustrated below:
 
-## Continual Learning Setup
-
-The experiments divide datasets into multiple sequential tasks.
-
-For example, the CIFAR-100 experiment uses a 10-task split, where the model learns the tasks sequentially rather than training on all classes simultaneously.
-
-### At each task:
-
-Task 1 → Train → Estimate head importance
-                    ↓
-              Retain important heads
-                    ↓
-Task 2 → Train → Update importance
-                    ↓
-Task 3 → Train → ...
-                    ↓
-                   ...
-Task 10 → Evaluate
-
-This setup allows us to investigate whether retaining important attention heads helps preserve knowledge from earlier tasks.
-
-## Repository Structure
 ```
-Deep-LearningLAB/
-│
-├── train_eval.py
-│   └── Main training and evaluation implementation
-│
-├── train_cifar100.sh
-│   └── CIFAR-100 continual-learning experiments
-│
-├── train_imagenet_r_s10.sh
-│   └── 10-task ImageNet-R experiments
-│
-├── train_imagenet_r_s20.sh
-│   └── 20-task ImageNet-R experiments
-│
-├── train_domainnet.sh
-│   └── DomainNet continual-learning experiments
-│
-├── load_data_on_gpu_cluster.py
-│   └── Dataset preparation/loading utilities
-│
-├── tools/
-│   └── Dataset preprocessing and splitting utilities
-│
-├── utils/
-│   └── Supporting training and model utilities
-│
-└── requirements.txt
-    └── Python dependencies
-```
-The repository currently provides training scripts for 10-split CIFAR-100, 10-split ImageNet-R, 20-split ImageNet-R and 10-split DomainNet experiments. 
-
-## Requirements
-
-The experiments were developed and tested with:
-
-* Python 3.11.5
-* PyTorch 2.1.0
-* Torchvision 0.16.0
-* timm 0.9.12
-* NumPy 2.3.2
-* SciPy 1.16.1
-* scikit-image 0.22.0
-* scikit-learn 1.3.2
-* einops 0.7.0
-* tqdm 4.66.1
-
-Install the dependencies with:
-
-pip install -r requirements.txt
-
-## Dataset Preparation
-
-The project supports:
-
-* CIFAR-100
-* ImageNet-R
-* DomainNet
-
-Download the datasets from their respective sources and arrange them using the directory structure expected by the training pipeline.
-
-The expected structure is:
-```
-DATA_ROOT/
-├── train/
-│   ├── class_1/
-│   │   ├── image_1.jpg
-│   │   └── image_2.jpg
-│   ├── class_2/
-│   │   └── ...
-│   └── ...
-│
-└── val/
-    ├── class_1/
-    │   ├── image_1.jpg
-    │   └── ...
-    ├── class_2/
-    │   └── ...
-    └── ...
-```
-Dataset-specific preprocessing scripts are available in the tools/ directory. The dataset root paths should be updated in those scripts before running them. (⁠GitHub)
-
-## Running Experiments
-
-### CIFAR-100
-
-The 10-task CIFAR-100 experiment can be launched using:
-
-bash train_cifar100.sh
-
-Before running, update the dataset path in the script:
-
---data_root /path/to/CIFAR100
-
-The training scripts expose the dataset location through the --data_root argument. Different random seeds can be tested by changing the --seed argument.
-
-## Training Pipeline
-
-The main implementation is contained in train_eval.py.
-
-At a high level, the training process is:
-```
-
               ┌─────────────────────┐
               │   Current Task      │
               └──────────┬──────────┘
@@ -200,73 +117,104 @@ At a high level, the training process is:
               │      Next Task      │
               └─────────────────────┘
 ```
-## Experimental Goal
 
-The main research question is:
+---
 
-Can gradient-based identification of important attention heads improve knowledge retention in Vision Transformers during continual learning?
+## Project Layout
 
-The experiments compare different strategies for handling attention heads as new tasks are introduced.
+```
+.
+├── train_eval.py               # Main training and evaluation script
+├── train_cifar100.sh           # CIFAR‑100 experiment (10 tasks)
+├── train_imagenet_r_s10.sh     # ImageNet‑R, 10‑task split
+├── train_imagenet_r_s20.sh     # ImageNet‑R, 20‑task split
+├── train_domainnet.sh          # DomainNet, 10‑task split
+├── load_data_on_gpu_cluster.py # Dataset preparation / loading utilities
+├── tools/                      # Dataset preprocessing and splitting
+├── utils/                      # Supporting training and model utilities
+├── requirements.txt            # Python dependencies
+└── README.md                   # This file
+```
 
-The goal is not simply to reduce the number of parameters, but to investigate whether task-relevant attention heads can act as a form of knowledge retention.
+---
 
+## Dataset Preparation
 
-## The current branch:
+The project supports three datasets:
 
-gradient-head-importance
+- **CIFAR‑100**
+- **ImageNet‑R**
+- **DomainNet**
 
-focuses on the gradient-based attention-head importance approach.
+Download the datasets from their respective sources and organise them into the following directory structure:
 
-This branch is intended primarily for experimentation and comparison with other attention-retention strategies developed during the project.
+```
+DATA_ROOT/
+├── train/
+│   ├── class_1/
+│   │   ├── image_1.jpg
+│   │   └── image_2.jpg
+│   ├── class_2/
+│   │   └── ...
+│   └── ...
+└── val/
+    ├── class_1/
+    │   ├── image_1.jpg
+    │   └── ...
+    ├── class_2/
+    │   └── ...
+    └── ...
+```
+
+Dataset‑specific preprocessing scripts are available in the `tools/` directory. Update the dataset root paths in those scripts before running them.
+
+---
+
+## Running Experiments
+
+### CIFAR‑100 (10 tasks)
+
+```bash
+bash train_cifar100.sh
+```
+
+Script sets the appropriate dataset path, task split, and random seed. You can customise these by editing the script or passing arguments directly to `train_eval.py`.
+
+---
 
 ## Reproducibility
 
-For reproducible experiments:
+To reproduce the results:
 
-1. Install the dependencies from requirements.txt.
-2. Prepare the required dataset.
-3. Set the appropriate --data_root.
-4. Use a fixed random seed.
-5. Run the corresponding dataset training script.
-6. Record the resulting task-wise evaluation metrics.
+1. Install dependencies from `requirements.txt`.
+2. Download and prepare the required dataset.
+3. Set the `--data_root` argument to the correct path.
+4. Run the corresponding training script with a fixed random seed (e.g., `--seed 42`).
+5. Record evaluation metrics (accuracy, forgetting, etc.) from the output.
 
-For example:
+We provide scripts with fixed seeds for convenience; you can also run multiple seeds to assess variability.
 
-bash train_cifar100.sh
-
-## Related Work
-
-The implementation is based on the idea that Transformer attention heads can have different levels of functional importance. Previous work has shown that attention heads can be analyzed and ranked according to their contribution to model behavior, motivating the use of head-level importance for retention and pruning strategies.
-
-This project applies the idea specifically to continual learning with Vision Transformers.
+---
 
 ## Citation
 
-If you use this repository or the associated implementation, please cite the original Attention Retention work:
-
-
+If you use this repository or the associated implementation, please cite the original work:
 
 ```bibtex
-
 @inproceedings{lu2026arcl,
-
   title     = {Attention Retention for Continual Learning with Vision Transformers},
-
   author    = {Lu, Yue and Zhou, Xiangyu and Zhang, Shizhou and Xing, Yinghui and Liang, Guoqiang and Zhang, Wencong},
-
   booktitle = {Proceedings of the AAAI Conference on Artificial Intelligence},
-
   year      = {2026}
-
 }
 ```
 
+---
+
 ## Acknowledgements
 
-This project was developed as part of the Deep Learning Laboratory work on continual learning and Vision Transformers.
+This project was developed as part of the Deep Learning Laboratory work on continual learning and Vision Transformers. We thank the contributors and the open‑source community for providing the building blocks (PyTorch, timm, etc.) that made this research possible.
 
-The implementation builds upon PyTorch and the timm Vision Transformer implementations.
+---
 
-Status
-
-This branch represents an experimental implementation of gradient-based attention-head importance for continual learning.
+**Status:** This branch (`gradient-head-importance`) implements the gradient‑based attention‑head importance approach and is intended for experimentation and comparison with other attention‑retention strategies.
