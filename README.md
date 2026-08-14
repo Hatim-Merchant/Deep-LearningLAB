@@ -114,8 +114,8 @@ The numbered scripts in the project root reproduce the head-freezing ablation st
 
 | Script | Head selection | Description |
 | --- | --- | --- |
-| `1train_freeze_michel.sh` | `michel` | Freeze heads ranked by cumulative Michel importance |
-| `2train_freeze_michel_current.sh` | `michel_current` | Freeze heads ranked by current-task Michel importance |
+| `1train_freeze_michel.sh` | `michel` | Considers the aggregated importance across all seen tasks (global importance freezing) |
+| `2train_freeze_michel_current.sh` | `michel_current` | Considers solely the most recently learned task (local task importance freezing) |
 | `3train_freeze_random.sh` | `random` | Freeze a random subset of heads (baseline) |
 | `4train_freeze_no_heads.sh` | — | No head freezing (baseline) |
 
