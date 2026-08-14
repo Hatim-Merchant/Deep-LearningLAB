@@ -7,7 +7,7 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg?labelColor=gray)](LICENSE)
 [![Timm](https://img.shields.io/badge/timm-0.9.12-1a1a2e)](https://github.com/rwightman/pytorch-image-models)
 
-🚀 Investigating whether identifying and retaining important attention heads can help Vision Transformers preserve knowledge during continual learning. 🚀
+Investigating whether identifying and retaining important attention heads can help Vision Transformers preserve knowledge during continual learning.
 
 </div>
 
