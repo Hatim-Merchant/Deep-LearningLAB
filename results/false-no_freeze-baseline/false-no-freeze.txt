@@ -1,0 +1,216 @@
+########################################################################################## Task: [1/10] ##########################################################################################
+model.safetensors:   0%|          | 0.00/410M [00:00<?, ?B/s]model.safetensors:   3%|▎         | 10.5M/410M [00:00<00:28, 13.9MB/s]model.safetensors:   5%|▌         | 21.0M/410M [00:00<00:15, 24.7MB/s]model.safetensors:   8%|▊         | 31.5M/410M [00:01<00:13, 28.8MB/s]model.safetensors:  10%|█         | 41.9M/410M [00:01<00:10, 35.0MB/s]model.safetensors:  13%|█▎        | 52.4M/410M [00:01<00:08, 41.3MB/s]model.safetensors:  15%|█▌        | 62.9M/410M [00:02<00:10, 34.5MB/s]model.safetensors:  18%|█▊        | 73.4M/410M [00:02<00:08, 38.7MB/s]model.safetensors:  20%|██        | 83.9M/410M [00:02<00:08, 38.9MB/s]model.safetensors:  23%|██▎       | 94.4M/410M [00:02<00:09, 34.1MB/s]model.safetensors:  26%|██▌       | 105M/410M [00:03<00:11, 25.7MB/s] model.safetensors:  28%|██▊       | 115M/410M [00:04<00:15, 18.8MB/s]model.safetensors:  31%|███       | 126M/410M [00:04<00:13, 20.5MB/s]model.safetensors:  33%|███▎      | 136M/410M [00:05<00:11, 24.6MB/s]model.safetensors:  36%|███▌      | 147M/410M [00:05<00:12, 21.7MB/s]model.safetensors:  38%|███▊      | 157M/410M [00:05<00:10, 24.1MB/s]model.safetensors:  41%|████      | 168M/410M [00:06<00:09, 26.6MB/s]model.safetensors:  43%|████▎     | 178M/410M [00:06<00:09, 25.1MB/s]model.safetensors:  46%|████▌     | 189M/410M [00:06<00:07, 29.0MB/s]model.safetensors:  49%|████▊     | 199M/410M [00:07<00:08, 25.9MB/s]model.safetensors:  51%|█████     | 210M/410M [00:08<00:08, 23.0MB/s]model.safetensors:  54%|█████▎    | 220M/410M [00:08<00:07, 26.7MB/s]model.safetensors:  56%|█████▌    | 231M/410M [00:08<00:07, 23.8MB/s]model.safetensors:  59%|█████▉    | 241M/410M [00:09<00:06, 26.5MB/s]model.safetensors:  61%|██████▏   | 252M/410M [00:09<00:05, 29.8MB/s]model.safetensors:  64%|██████▍   | 262M/410M [00:10<00:07, 21.0MB/s]model.safetensors:  66%|██████▋   | 273M/410M [00:10<00:06, 21.0MB/s]model.safetensors:  69%|██████▉   | 283M/410M [00:11<00:05, 22.5MB/s]model.safetensors:  72%|███████▏  | 294M/410M [00:12<00:07, 14.9MB/s]model.safetensors:  74%|███████▍  | 304M/410M [00:13<00:06, 15.4MB/s]model.safetensors:  77%|███████▋  | 315M/410M [00:14<00:07, 13.3MB/s]model.safetensors:  79%|███████▉  | 325M/410M [00:14<00:05, 14.7MB/s]model.safetensors:  82%|████████▏ | 336M/410M [00:15<00:04, 15.2MB/s]model.safetensors:  84%|████████▍ | 346M/410M [00:15<00:04, 15.9MB/s]model.safetensors:  87%|████████▋ | 357M/410M [00:16<00:03, 16.1MB/s]model.safetensors:  89%|████████▉ | 367M/410M [00:16<00:02, 18.5MB/s]model.safetensors:  92%|█████████▏| 377M/410M [00:17<00:01, 19.1MB/s]model.safetensors:  95%|█████████▍| 388M/410M [00:17<00:01, 18.5MB/s]model.safetensors:  97%|█████████▋| 398M/410M [00:18<00:00, 18.5MB/s]model.safetensors: 100%|█████████▉| 409M/410M [00:19<00:00, 14.5MB/s]model.safetensors: 100%|██████████| 410M/410M [00:20<00:00, 20.1MB/s]
+****************************************************************************************** Start Training ******************************************************************************************
+:: Training:
+Task [ 1/10] Epoch [1/5]:: lr=1.000e-02, ce_loss=0.2724, loss=0.2724, data_time=4.133, batch_time=127.864, acc_top1=91.49%, acc_top5=95.47%
+Task [ 1/10] Epoch [2/5]:: lr=1.000e-02, ce_loss=0.1894, loss=0.1894, data_time=1.459, batch_time=123.330, acc_top1=93.57%, acc_top5=96.60%
+Task [ 1/10] Epoch [3/5]:: lr=1.000e-02, ce_loss=0.1796, loss=0.1796, data_time=1.560, batch_time=123.395, acc_top1=94.01%, acc_top5=96.70%
+Task [ 1/10] Epoch [4/5]:: lr=1.000e-02, ce_loss=0.1691, loss=0.1691, data_time=1.555, batch_time=123.300, acc_top1=94.39%, acc_top5=96.99%
+Task [ 1/10] Epoch [5/5]:: lr=1.000e-03, ce_loss=0.1390, loss=0.1390, data_time=1.215, batch_time=123.004, acc_top1=95.31%, acc_top5=97.46%
+:: Refine head:
+epoch [10/20]: loss=0.0003, acc_top1=100.00%
+epoch [20/20]: loss=0.0003, acc_top1=100.00%
+Task [ 1/10]:: Training time = 00:10:46
+****************************************************************************************** Start Evaluation ******************************************************************************************
+Task [1/10]:: Eval [1/1]: eval_time=2.0s, acc_task_inc=99.30%, acc_class_inc=99.30%
+========================================================================================== End of task [1/10] ==========================================================================================
+:: ** Results of task [1]: [ diag_task_avg_acc=99.30% | task_inc_last_acc=99.30% | task_inc_last_forg= 0.00% | class_inc_last_acc=99.30% | class_inc_last_forg= 0.00% ] **
+:: ** Time so far: 00:11:10 **
+########################################################################################## Task: [2/10] ##########################################################################################
+****************************************************************************************** Start Training ******************************************************************************************
+:: Training:
+Task [ 2/10] Epoch [1/5]:: lr=1.000e-02, ce_loss=0.3739, loss=0.3739, data_time=1.480, batch_time=123.182, acc_top1=88.51%, acc_top5=93.44%
+Task [ 2/10] Epoch [2/5]:: lr=1.000e-02, ce_loss=0.2200, loss=0.2200, data_time=1.836, batch_time=123.800, acc_top1=92.60%, acc_top5=96.24%
+Task [ 2/10] Epoch [3/5]:: lr=1.000e-02, ce_loss=0.2105, loss=0.2105, data_time=1.575, batch_time=123.560, acc_top1=92.92%, acc_top5=96.26%
+Task [ 2/10] Epoch [4/5]:: lr=1.000e-02, ce_loss=0.1921, loss=0.1921, data_time=2.053, batch_time=123.947, acc_top1=93.54%, acc_top5=96.52%
+Task [ 2/10] Epoch [5/5]:: lr=1.000e-03, ce_loss=0.1613, loss=0.1613, data_time=1.942, batch_time=123.876, acc_top1=94.54%, acc_top5=97.05%
+:: Refine head:
+epoch [10/20]: loss=0.0080, acc_top1=100.00%
+epoch [20/20]: loss=0.0080, acc_top1=100.00%
+Task [ 2/10]:: Training time = 00:10:55
+****************************************************************************************** Start Evaluation ******************************************************************************************
+Task [2/10]:: Eval [1/2]: eval_time=1.9s, acc_task_inc=94.70%, acc_class_inc=66.10%
+Task [2/10]:: Eval [2/2]: eval_time=2.0s, acc_task_inc=99.00%, acc_class_inc=98.90%
+========================================================================================== End of task [2/10] ==========================================================================================
+:: ** Results of task [2]: [ diag_task_avg_acc=99.15% | task_inc_last_acc=96.85% | task_inc_last_forg= 4.60% | class_inc_last_acc=82.50% | class_inc_last_forg=33.20% ] **
+:: ** Time so far: 00:22:09 **
+########################################################################################## Task: [3/10] ##########################################################################################
+****************************************************************************************** Start Training ******************************************************************************************
+:: Training:
+Task [ 3/10] Epoch [1/5]:: lr=1.000e-02, ce_loss=0.2842, loss=0.2842, data_time=1.488, batch_time=123.135, acc_top1=91.05%, acc_top5=95.32%
+Task [ 3/10] Epoch [2/5]:: lr=1.000e-02, ce_loss=0.2002, loss=0.2002, data_time=1.801, batch_time=123.721, acc_top1=93.40%, acc_top5=96.55%
+Task [ 3/10] Epoch [3/5]:: lr=1.000e-02, ce_loss=0.1856, loss=0.1856, data_time=1.977, batch_time=123.869, acc_top1=93.78%, acc_top5=96.78%
+Task [ 3/10] Epoch [4/5]:: lr=1.000e-02, ce_loss=0.1771, loss=0.1771, data_time=1.422, batch_time=123.392, acc_top1=94.17%, acc_top5=96.85%
+Task [ 3/10] Epoch [5/5]:: lr=1.000e-03, ce_loss=0.1498, loss=0.1498, data_time=1.943, batch_time=123.819, acc_top1=94.92%, acc_top5=97.17%
+:: Refine head:
+epoch [10/20]: loss=0.0134, acc_top1=100.00%
+epoch [20/20]: loss=0.0132, acc_top1=100.00%
+Task [ 3/10]:: Training time = 00:11:08
+****************************************************************************************** Start Evaluation ******************************************************************************************
+Task [3/10]:: Eval [1/3]: eval_time=1.9s, acc_task_inc=97.10%, acc_class_inc=56.10%
+Task [3/10]:: Eval [2/3]: eval_time=1.8s, acc_task_inc=98.00%, acc_class_inc=87.50%
+Task [3/10]:: Eval [3/3]: eval_time=2.0s, acc_task_inc=98.10%, acc_class_inc=97.70%
+========================================================================================== End of task [3/10] ==========================================================================================
+:: ** Results of task [3]: [ diag_task_avg_acc=98.80% | task_inc_last_acc=97.73% | task_inc_last_forg= 1.60% | class_inc_last_acc=80.43% | class_inc_last_forg=27.30% ] **
+:: ** Time so far: 00:33:23 **
+########################################################################################## Task: [4/10] ##########################################################################################
+****************************************************************************************** Start Training ******************************************************************************************
+:: Training:
+Task [ 4/10] Epoch [1/5]:: lr=1.000e-02, ce_loss=0.3005, loss=0.3005, data_time=1.396, batch_time=123.027, acc_top1=90.40%, acc_top5=94.85%
+Task [ 4/10] Epoch [2/5]:: lr=1.000e-02, ce_loss=0.2132, loss=0.2132, data_time=1.816, batch_time=123.722, acc_top1=93.01%, acc_top5=96.14%
+Task [ 4/10] Epoch [3/5]:: lr=1.000e-02, ce_loss=0.1938, loss=0.1938, data_time=1.561, batch_time=123.381, acc_top1=93.44%, acc_top5=96.49%
+Task [ 4/10] Epoch [4/5]:: lr=1.000e-02, ce_loss=0.1872, loss=0.1872, data_time=2.193, batch_time=124.084, acc_top1=93.82%, acc_top5=96.52%
+Task [ 4/10] Epoch [5/5]:: lr=1.000e-03, ce_loss=0.1551, loss=0.1551, data_time=1.916, batch_time=123.733, acc_top1=94.81%, acc_top5=97.19%
+:: Refine head:
+epoch [10/20]: loss=0.0243, acc_top1=99.98%
+epoch [20/20]: loss=0.0229, acc_top1=99.99%
+Task [ 4/10]:: Training time = 00:11:19
+****************************************************************************************** Start Evaluation ******************************************************************************************
+Task [4/10]:: Eval [1/4]: eval_time=1.8s, acc_task_inc=96.70%, acc_class_inc=56.90%
+Task [4/10]:: Eval [2/4]: eval_time=1.8s, acc_task_inc=96.40%, acc_class_inc=72.00%
+Task [4/10]:: Eval [3/4]: eval_time=1.8s, acc_task_inc=97.00%, acc_class_inc=88.20%
+Task [4/10]:: Eval [4/4]: eval_time=1.9s, acc_task_inc=98.80%, acc_class_inc=98.50%
+========================================================================================== End of task [4/10] ==========================================================================================
+:: ** Results of task [4]: [ diag_task_avg_acc=98.80% | task_inc_last_acc=97.22% | task_inc_last_forg= 2.10% | class_inc_last_acc=78.90% | class_inc_last_forg=26.27% ] **
+:: ** Time so far: 00:44:49 **
+########################################################################################## Task: [5/10] ##########################################################################################
+****************************************************************************************** Start Training ******************************************************************************************
+:: Training:
+Task [ 5/10] Epoch [1/5]:: lr=1.000e-02, ce_loss=0.2785, loss=0.2785, data_time=1.478, batch_time=123.149, acc_top1=91.16%, acc_top5=95.66%
+Task [ 5/10] Epoch [2/5]:: lr=1.000e-02, ce_loss=0.1974, loss=0.1974, data_time=2.114, batch_time=124.035, acc_top1=93.38%, acc_top5=96.53%
+Task [ 5/10] Epoch [3/5]:: lr=1.000e-02, ce_loss=0.1795, loss=0.1795, data_time=1.698, batch_time=123.600, acc_top1=94.08%, acc_top5=96.88%
+Task [ 5/10] Epoch [4/5]:: lr=1.000e-02, ce_loss=0.1708, loss=0.1708, data_time=1.478, batch_time=123.347, acc_top1=94.25%, acc_top5=97.01%
+Task [ 5/10] Epoch [5/5]:: lr=1.000e-03, ce_loss=0.1498, loss=0.1498, data_time=1.431, batch_time=123.263, acc_top1=94.96%, acc_top5=97.37%
+:: Refine head:
+epoch [10/20]: loss=0.0389, acc_top1=99.95%
+epoch [20/20]: loss=0.0359, acc_top1=99.98%
+Task [ 5/10]:: Training time = 00:11:30
+****************************************************************************************** Start Evaluation ******************************************************************************************
+Task [5/10]:: Eval [1/5]: eval_time=1.9s, acc_task_inc=96.10%, acc_class_inc=42.90%
+Task [5/10]:: Eval [2/5]: eval_time=1.8s, acc_task_inc=95.20%, acc_class_inc=63.40%
+Task [5/10]:: Eval [3/5]: eval_time=1.8s, acc_task_inc=94.70%, acc_class_inc=74.40%
+Task [5/10]:: Eval [4/5]: eval_time=1.8s, acc_task_inc=95.70%, acc_class_inc=82.40%
+Task [5/10]:: Eval [5/5]: eval_time=2.0s, acc_task_inc=98.70%, acc_class_inc=98.20%
+========================================================================================== End of task [5/10] ==========================================================================================
+:: ** Results of task [5]: [ diag_task_avg_acc=98.78% | task_inc_last_acc=96.08% | task_inc_last_forg= 3.38% | class_inc_last_acc=72.26% | class_inc_last_forg=32.83% ] **
+:: ** Time so far: 00:56:29 **
+########################################################################################## Task: [6/10] ##########################################################################################
+****************************************************************************************** Start Training ******************************************************************************************
+:: Training:
+Task [ 6/10] Epoch [1/5]:: lr=1.000e-02, ce_loss=0.3031, loss=0.3031, data_time=1.328, batch_time=122.901, acc_top1=89.77%, acc_top5=95.71%
+Task [ 6/10] Epoch [2/5]:: lr=1.000e-02, ce_loss=0.1976, loss=0.1976, data_time=1.989, batch_time=123.892, acc_top1=93.16%, acc_top5=96.82%
+Task [ 6/10] Epoch [3/5]:: lr=1.000e-02, ce_loss=0.1911, loss=0.1911, data_time=2.024, batch_time=123.919, acc_top1=93.37%, acc_top5=96.93%
+Task [ 6/10] Epoch [4/5]:: lr=1.000e-02, ce_loss=0.1778, loss=0.1778, data_time=1.985, batch_time=123.859, acc_top1=93.90%, acc_top5=97.13%
+Task [ 6/10] Epoch [5/5]:: lr=1.000e-03, ce_loss=0.1450, loss=0.1450, data_time=1.914, batch_time=123.772, acc_top1=94.84%, acc_top5=97.51%
+:: Refine head:
+epoch [10/20]: loss=0.0430, acc_top1=99.98%
+epoch [20/20]: loss=0.0399, acc_top1=99.99%
+Task [ 6/10]:: Training time = 00:11:42
+****************************************************************************************** Start Evaluation ******************************************************************************************
+Task [6/10]:: Eval [1/6]: eval_time=1.8s, acc_task_inc=94.50%, acc_class_inc=33.30%
+Task [6/10]:: Eval [2/6]: eval_time=1.8s, acc_task_inc=95.70%, acc_class_inc=57.50%
+Task [6/10]:: Eval [3/6]: eval_time=1.8s, acc_task_inc=95.20%, acc_class_inc=68.40%
+Task [6/10]:: Eval [4/6]: eval_time=1.8s, acc_task_inc=95.20%, acc_class_inc=65.00%
+Task [6/10]:: Eval [5/6]: eval_time=1.8s, acc_task_inc=97.60%, acc_class_inc=81.10%
+Task [6/10]:: Eval [6/6]: eval_time=2.0s, acc_task_inc=96.60%, acc_class_inc=96.20%
+========================================================================================== End of task [6/10] ==========================================================================================
+:: ** Results of task [6]: [ diag_task_avg_acc=98.42% | task_inc_last_acc=95.80% | task_inc_last_forg= 3.14% | class_inc_last_acc=66.92% | class_inc_last_forg=37.46% ] **
+:: ** Time so far: 01:08:22 **
+########################################################################################## Task: [7/10] ##########################################################################################
+****************************************************************************************** Start Training ******************************************************************************************
+:: Training:
+Task [ 7/10] Epoch [1/5]:: lr=1.000e-02, ce_loss=0.3108, loss=0.3108, data_time=1.432, batch_time=122.919, acc_top1=89.79%, acc_top5=94.78%
+Task [ 7/10] Epoch [2/5]:: lr=1.000e-02, ce_loss=0.2102, loss=0.2102, data_time=1.967, batch_time=123.801, acc_top1=92.85%, acc_top5=96.34%
+Task [ 7/10] Epoch [3/5]:: lr=1.000e-02, ce_loss=0.1986, loss=0.1986, data_time=1.734, batch_time=123.647, acc_top1=93.19%, acc_top5=96.48%
+Task [ 7/10] Epoch [4/5]:: lr=1.000e-02, ce_loss=0.1829, loss=0.1829, data_time=1.902, batch_time=123.836, acc_top1=93.59%, acc_top5=96.78%
+Task [ 7/10] Epoch [5/5]:: lr=1.000e-03, ce_loss=0.1575, loss=0.1575, data_time=2.161, batch_time=124.092, acc_top1=94.51%, acc_top5=97.16%
+:: Refine head:
+epoch [10/20]: loss=0.0432, acc_top1=99.98%
+epoch [20/20]: loss=0.0398, acc_top1=99.98%
+Task [ 7/10]:: Training time = 00:11:57
+****************************************************************************************** Start Evaluation ******************************************************************************************
+Task [7/10]:: Eval [1/7]: eval_time=1.8s, acc_task_inc=94.70%, acc_class_inc=37.70%
+Task [7/10]:: Eval [2/7]: eval_time=1.9s, acc_task_inc=95.50%, acc_class_inc=60.00%
+Task [7/10]:: Eval [3/7]: eval_time=1.8s, acc_task_inc=95.10%, acc_class_inc=60.30%
+Task [7/10]:: Eval [4/7]: eval_time=1.8s, acc_task_inc=95.40%, acc_class_inc=65.40%
+Task [7/10]:: Eval [5/7]: eval_time=1.8s, acc_task_inc=96.30%, acc_class_inc=76.50%
+Task [7/10]:: Eval [6/7]: eval_time=1.9s, acc_task_inc=95.00%, acc_class_inc=82.50%
+Task [7/10]:: Eval [7/7]: eval_time=2.0s, acc_task_inc=97.70%, acc_class_inc=97.60%
+========================================================================================== End of task [7/10] ==========================================================================================
+:: ** Results of task [7]: [ diag_task_avg_acc=98.31% | task_inc_last_acc=95.67% | task_inc_last_forg= 3.08% | class_inc_last_acc=68.57% | class_inc_last_forg=34.40% ] **
+:: ** Time so far: 01:20:32 **
+########################################################################################## Task: [8/10] ##########################################################################################
+****************************************************************************************** Start Training ******************************************************************************************
+:: Training:
+Task [ 8/10] Epoch [1/5]:: lr=1.000e-02, ce_loss=0.3073, loss=0.3073, data_time=1.881, batch_time=123.464, acc_top1=90.04%, acc_top5=94.68%
+Task [ 8/10] Epoch [2/5]:: lr=1.000e-02, ce_loss=0.2100, loss=0.2100, data_time=2.124, batch_time=124.116, acc_top1=93.03%, acc_top5=96.22%
+Task [ 8/10] Epoch [3/5]:: lr=1.000e-02, ce_loss=0.1942, loss=0.1942, data_time=1.713, batch_time=123.636, acc_top1=93.40%, acc_top5=96.42%
+Task [ 8/10] Epoch [4/5]:: lr=1.000e-02, ce_loss=0.1851, loss=0.1851, data_time=1.145, batch_time=123.035, acc_top1=93.78%, acc_top5=96.59%
+Task [ 8/10] Epoch [5/5]:: lr=1.000e-03, ce_loss=0.1562, loss=0.1562, data_time=2.184, batch_time=123.991, acc_top1=94.61%, acc_top5=97.10%
+:: Refine head:
+epoch [10/20]: loss=0.0529, acc_top1=99.83%
+epoch [20/20]: loss=0.0491, acc_top1=99.89%
+Task [ 8/10]:: Training time = 00:12:09
+****************************************************************************************** Start Evaluation ******************************************************************************************
+Task [8/10]:: Eval [1/8]: eval_time=1.8s, acc_task_inc=95.20%, acc_class_inc=31.90%
+Task [8/10]:: Eval [2/8]: eval_time=1.8s, acc_task_inc=95.80%, acc_class_inc=51.10%
+Task [8/10]:: Eval [3/8]: eval_time=1.8s, acc_task_inc=94.50%, acc_class_inc=52.70%
+Task [8/10]:: Eval [4/8]: eval_time=1.8s, acc_task_inc=93.90%, acc_class_inc=52.50%
+Task [8/10]:: Eval [5/8]: eval_time=1.8s, acc_task_inc=95.50%, acc_class_inc=67.90%
+Task [8/10]:: Eval [6/8]: eval_time=1.8s, acc_task_inc=94.90%, acc_class_inc=69.80%
+Task [8/10]:: Eval [7/8]: eval_time=1.8s, acc_task_inc=94.90%, acc_class_inc=80.70%
+Task [8/10]:: Eval [8/8]: eval_time=1.9s, acc_task_inc=98.60%, acc_class_inc=97.60%
+========================================================================================== End of task [8/10] ==========================================================================================
+:: ** Results of task [8]: [ diag_task_avg_acc=98.35% | task_inc_last_acc=95.41% | task_inc_last_forg= 3.36% | class_inc_last_acc=63.02% | class_inc_last_forg=39.97% ] **
+:: ** Time so far: 01:32:56 **
+########################################################################################## Task: [9/10] ##########################################################################################
+****************************************************************************************** Start Training ******************************************************************************************
+:: Training:
+Task [ 9/10] Epoch [1/5]:: lr=1.000e-02, ce_loss=0.2709, loss=0.2709, data_time=1.687, batch_time=123.172, acc_top1=91.40%, acc_top5=95.60%
+Task [ 9/10] Epoch [2/5]:: lr=1.000e-02, ce_loss=0.1899, loss=0.1899, data_time=1.450, batch_time=123.319, acc_top1=93.50%, acc_top5=96.70%
+Task [ 9/10] Epoch [3/5]:: lr=1.000e-02, ce_loss=0.1681, loss=0.1681, data_time=2.132, batch_time=123.999, acc_top1=94.24%, acc_top5=97.05%
+Task [ 9/10] Epoch [4/5]:: lr=1.000e-02, ce_loss=0.1677, loss=0.1677, data_time=1.693, batch_time=123.517, acc_top1=94.33%, acc_top5=97.03%
+Task [ 9/10] Epoch [5/5]:: lr=1.000e-03, ce_loss=0.1401, loss=0.1401, data_time=1.664, batch_time=123.524, acc_top1=95.32%, acc_top5=97.52%
+:: Refine head:
+epoch [10/20]: loss=0.0539, acc_top1=99.85%
+epoch [20/20]: loss=0.0503, acc_top1=99.90%
+Task [ 9/10]:: Training time = 00:12:16
+****************************************************************************************** Start Evaluation ******************************************************************************************
+Task [9/10]:: Eval [1/9]: eval_time=1.9s, acc_task_inc=93.00%, acc_class_inc=31.10%
+Task [9/10]:: Eval [2/9]: eval_time=1.9s, acc_task_inc=96.10%, acc_class_inc=48.30%
+Task [9/10]:: Eval [3/9]: eval_time=1.8s, acc_task_inc=94.30%, acc_class_inc=53.40%
+Task [9/10]:: Eval [4/9]: eval_time=1.9s, acc_task_inc=94.30%, acc_class_inc=43.60%
+Task [9/10]:: Eval [5/9]: eval_time=1.9s, acc_task_inc=92.80%, acc_class_inc=57.60%
+Task [9/10]:: Eval [6/9]: eval_time=1.8s, acc_task_inc=93.40%, acc_class_inc=63.40%
+Task [9/10]:: Eval [7/9]: eval_time=1.8s, acc_task_inc=94.40%, acc_class_inc=76.90%
+Task [9/10]:: Eval [8/9]: eval_time=1.8s, acc_task_inc=95.70%, acc_class_inc=88.20%
+Task [9/10]:: Eval [9/9]: eval_time=2.0s, acc_task_inc=99.30%, acc_class_inc=98.90%
+========================================================================================== End of task [9/10] ==========================================================================================
+:: ** Results of task [9]: [ diag_task_avg_acc=98.46% | task_inc_last_acc=94.81% | task_inc_last_forg= 4.10% | class_inc_last_acc=62.38% | class_inc_last_forg=40.19% ] **
+:: ** Time so far: 01:45:29 **
+########################################################################################## Task: [10/10] ##########################################################################################
+****************************************************************************************** Start Training ******************************************************************************************
+:: Training:
+Task [10/10] Epoch [1/5]:: lr=1.000e-02, ce_loss=0.2364, loss=0.2364, data_time=1.594, batch_time=123.082, acc_top1=92.64%, acc_top5=95.95%
+Task [10/10] Epoch [2/5]:: lr=1.000e-02, ce_loss=0.1697, loss=0.1697, data_time=1.552, batch_time=123.444, acc_top1=94.38%, acc_top5=96.98%
+Task [10/10] Epoch [3/5]:: lr=1.000e-02, ce_loss=0.1547, loss=0.1547, data_time=1.954, batch_time=123.826, acc_top1=94.89%, acc_top5=97.27%
+Task [10/10] Epoch [4/5]:: lr=1.000e-02, ce_loss=0.1524, loss=0.1524, data_time=1.926, batch_time=123.792, acc_top1=94.91%, acc_top5=97.23%
+Task [10/10] Epoch [5/5]:: lr=1.000e-03, ce_loss=0.1269, loss=0.1269, data_time=2.111, batch_time=123.908, acc_top1=95.71%, acc_top5=97.63%
+:: Refine head:
+epoch [10/20]: loss=0.0737, acc_top1=99.86%
+epoch [20/20]: loss=0.0691, acc_top1=99.91%
+Task [10/10]:: Training time = 00:12:30
+****************************************************************************************** Start Evaluation ******************************************************************************************
+Task [10/10]:: Eval [ 1/10]: eval_time=1.8s, acc_task_inc=91.60%, acc_class_inc=23.30%
+Task [10/10]:: Eval [ 2/10]: eval_time=1.8s, acc_task_inc=93.80%, acc_class_inc=33.60%
+Task [10/10]:: Eval [ 3/10]: eval_time=1.8s, acc_task_inc=92.40%, acc_class_inc=51.20%
+Task [10/10]:: Eval [ 4/10]: eval_time=1.8s, acc_task_inc=92.20%, acc_class_inc=30.60%
+Task [10/10]:: Eval [ 5/10]: eval_time=1.8s, acc_task_inc=90.90%, acc_class_inc=41.30%
+Task [10/10]:: Eval [ 6/10]: eval_time=1.9s, acc_task_inc=92.80%, acc_class_inc=41.40%
+Task [10/10]:: Eval [ 7/10]: eval_time=1.8s, acc_task_inc=92.40%, acc_class_inc=57.60%
+Task [10/10]:: Eval [ 8/10]: eval_time=1.8s, acc_task_inc=94.50%, acc_class_inc=67.40%
+Task [10/10]:: Eval [ 9/10]: eval_time=1.8s, acc_task_inc=96.10%, acc_class_inc=77.20%
+Task [10/10]:: Eval [10/10]: eval_time=2.0s, acc_task_inc=99.50%, acc_class_inc=99.30%
+========================================================================================== End of task [10/10] ==========================================================================================
+:: ** Results of task [10]: [ diag_task_avg_acc=98.56% | task_inc_last_acc=93.62% | task_inc_last_forg= 5.49% | class_inc_last_acc=52.29% | class_inc_last_forg=51.03% ] **
+:: ** Time so far: 01:58:18 **

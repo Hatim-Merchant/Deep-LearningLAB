@@ -1,0 +1,325 @@
+########################################################################################## Task: [1/10] ##########################################################################################
+****************************************************************************************** Start Training ******************************************************************************************
+:: Training:
+Task [ 1/10] Epoch [1/5]:: lr=1.000e-02, ce_loss=0.2724, loss=0.2724, data_time=4.433, batch_time=127.266, acc_top1=91.49%, acc_top5=95.47%
+Task [ 1/10] Epoch [2/5]:: lr=1.000e-02, ce_loss=0.1894, loss=0.1894, data_time=1.694, batch_time=124.061, acc_top1=93.57%, acc_top5=96.60%
+Task [ 1/10] Epoch [3/5]:: lr=1.000e-02, ce_loss=0.1796, loss=0.1796, data_time=1.743, batch_time=123.959, acc_top1=94.01%, acc_top5=96.70%
+Task [ 1/10] Epoch [4/5]:: lr=1.000e-02, ce_loss=0.1691, loss=0.1691, data_time=1.591, batch_time=124.014, acc_top1=94.39%, acc_top5=96.99%
+Task [ 1/10] Epoch [5/5]:: lr=1.000e-03, ce_loss=0.1390, loss=0.1390, data_time=1.765, batch_time=124.350, acc_top1=95.31%, acc_top5=97.46%
+***** Calculating head importance *****
+  Num examples = 50000
+  Batch size   = 100
+  Num steps    = 100
+:: [head_freeze] task 1 summary
+::   scoring_method = voita
+::   selection      = michel_current
+::   freeze_ratio   = 0.015  |  freeze_subset = 0.2
+::   new frozen     = +2 heads  |  total frozen = 2/144 (1.4%)
+::   newly frozen heads : L0H0, L8H8
+::   top-5 by cum. score: L0H0=0.8343, L8H8=0.5490, L1H3=0.5474, L4H4=0.5222, L10H3=0.5199
+:: Refine head:
+epoch [10/20]: loss=0.0003, acc_top1=100.00%
+epoch [20/20]: loss=0.0003, acc_top1=100.00%
+Task [ 1/10]:: Training time = 00:11:24
+****************************************************************************************** Start Evaluation ******************************************************************************************
+Task [1/10]:: Eval [1/1]: eval_time=1.8s, acc_task_inc=99.30%, acc_class_inc=99.30%
+========================================================================================== End of task [1/10] ==========================================================================================
+:: ** Results of task [1]: [ diag_task_avg_acc=99.30% | task_inc_last_acc=99.30% | task_inc_last_forg= 0.00% | class_inc_last_acc=99.30% | class_inc_last_forg= 0.00% ] **
+:: ** Time so far: 00:11:27 **
+########################################################################################## Task: [2/10] ##########################################################################################
+****************************************************************************************** Start Training ******************************************************************************************
+:: Training:
+Task [ 2/10] Epoch [1/5]:: lr=1.000e-02, ce_loss=0.3727, loss=0.3727, data_time=1.975, batch_time=124.890, acc_top1=88.52%, acc_top5=93.36%
+Task [ 2/10] Epoch [2/5]:: lr=1.000e-02, ce_loss=0.2239, loss=0.2239, data_time=1.797, batch_time=124.725, acc_top1=92.42%, acc_top5=96.09%
+Task [ 2/10] Epoch [3/5]:: lr=1.000e-02, ce_loss=0.1997, loss=0.1997, data_time=1.389, batch_time=124.525, acc_top1=93.30%, acc_top5=96.49%
+Task [ 2/10] Epoch [4/5]:: lr=1.000e-02, ce_loss=0.1938, loss=0.1938, data_time=1.733, batch_time=124.752, acc_top1=93.42%, acc_top5=96.55%
+Task [ 2/10] Epoch [5/5]:: lr=1.000e-03, ce_loss=0.1612, loss=0.1612, data_time=2.054, batch_time=125.053, acc_top1=94.42%, acc_top5=97.05%
+***** Calculating head importance *****
+  Num examples = 50000
+  Batch size   = 100
+  Num steps    = 100
+:: [head_freeze] task 2 summary
+::   scoring_method = voita
+::   selection      = michel_current
+::   freeze_ratio   = 0.015  |  freeze_subset = 0.2
+::   new frozen     = +2 heads  |  total frozen = 4/144 (2.8%)
+::   newly frozen heads : L1H3, L11H2
+::   top-5 by cum. score: L0H0=1.6763, L1H3=1.1062, L8H8=1.0444, L10H3=1.0254, L11H2=1.0241
+:: Refine head:
+epoch [10/20]: loss=0.0074, acc_top1=100.00%
+epoch [20/20]: loss=0.0073, acc_top1=100.00%
+Task [ 2/10]:: Training time = 00:11:36
+****************************************************************************************** Start Evaluation ******************************************************************************************
+Task [2/10]:: Eval [1/2]: eval_time=1.8s, acc_task_inc=94.80%, acc_class_inc=67.00%
+Task [2/10]:: Eval [2/2]: eval_time=1.9s, acc_task_inc=99.30%, acc_class_inc=99.20%
+========================================================================================== End of task [2/10] ==========================================================================================
+:: ** Results of task [2]: [ diag_task_avg_acc=99.30% | task_inc_last_acc=97.05% | task_inc_last_forg= 4.50% | class_inc_last_acc=83.10% | class_inc_last_forg=32.30% ] **
+:: ** Time so far: 00:23:07 **
+########################################################################################## Task: [3/10] ##########################################################################################
+****************************************************************************************** Start Training ******************************************************************************************
+:: Training:
+Task [ 3/10] Epoch [1/5]:: lr=1.000e-02, ce_loss=0.2902, loss=0.2902, data_time=1.525, batch_time=124.130, acc_top1=90.74%, acc_top5=95.19%
+Task [ 3/10] Epoch [2/5]:: lr=1.000e-02, ce_loss=0.1983, loss=0.1983, data_time=1.774, batch_time=124.627, acc_top1=93.51%, acc_top5=96.57%
+Task [ 3/10] Epoch [3/5]:: lr=1.000e-02, ce_loss=0.1835, loss=0.1835, data_time=2.203, batch_time=125.045, acc_top1=93.86%, acc_top5=96.79%
+Task [ 3/10] Epoch [4/5]:: lr=1.000e-02, ce_loss=0.1762, loss=0.1762, data_time=1.863, batch_time=124.879, acc_top1=94.07%, acc_top5=96.89%
+Task [ 3/10] Epoch [5/5]:: lr=1.000e-03, ce_loss=0.1487, loss=0.1487, data_time=2.070, batch_time=124.871, acc_top1=94.95%, acc_top5=97.30%
+***** Calculating head importance *****
+  Num examples = 50000
+  Batch size   = 100
+  Num steps    = 100
+:: [head_freeze] task 3 summary
+::   scoring_method = voita
+::   selection      = michel_current
+::   freeze_ratio   = 0.015  |  freeze_subset = 0.2
+::   new frozen     = +2 heads  |  total frozen = 6/144 (4.2%)
+::   newly frozen heads : L2H6, L11H4
+::   top-5 by cum. score: L0H0=2.4758, L1H3=1.6769, L8H8=1.5672, L10H3=1.5275, L2H6=1.5113
+:: Refine head:
+epoch [10/20]: loss=0.0128, acc_top1=100.00%
+epoch [20/20]: loss=0.0125, acc_top1=100.00%
+Task [ 3/10]:: Training time = 00:11:48
+****************************************************************************************** Start Evaluation ******************************************************************************************
+Task [3/10]:: Eval [1/3]: eval_time=1.9s, acc_task_inc=97.30%, acc_class_inc=57.30%
+Task [3/10]:: Eval [2/3]: eval_time=1.9s, acc_task_inc=98.20%, acc_class_inc=84.70%
+Task [3/10]:: Eval [3/3]: eval_time=1.8s, acc_task_inc=98.50%, acc_class_inc=98.10%
+========================================================================================== End of task [3/10] ==========================================================================================
+:: ** Results of task [3]: [ diag_task_avg_acc=99.03% | task_inc_last_acc=98.00% | task_inc_last_forg= 1.55% | class_inc_last_acc=80.03% | class_inc_last_forg=28.25% ] **
+:: ** Time so far: 00:35:01 **
+########################################################################################## Task: [4/10] ##########################################################################################
+****************************************************************************************** Start Training ******************************************************************************************
+:: Training:
+Task [ 4/10] Epoch [1/5]:: lr=1.000e-02, ce_loss=0.2960, loss=0.2960, data_time=1.700, batch_time=124.422, acc_top1=90.55%, acc_top5=94.98%
+Task [ 4/10] Epoch [2/5]:: lr=1.000e-02, ce_loss=0.2079, loss=0.2079, data_time=2.141, batch_time=125.106, acc_top1=92.97%, acc_top5=96.34%
+Task [ 4/10] Epoch [3/5]:: lr=1.000e-02, ce_loss=0.1914, loss=0.1914, data_time=1.837, batch_time=124.912, acc_top1=93.66%, acc_top5=96.56%
+Task [ 4/10] Epoch [4/5]:: lr=1.000e-02, ce_loss=0.1803, loss=0.1803, data_time=1.883, batch_time=124.681, acc_top1=94.00%, acc_top5=96.64%
+Task [ 4/10] Epoch [5/5]:: lr=1.000e-03, ce_loss=0.1580, loss=0.1580, data_time=2.353, batch_time=125.421, acc_top1=94.67%, acc_top5=97.00%
+***** Calculating head importance *****
+  Num examples = 50000
+  Batch size   = 100
+  Num steps    = 100
+:: [head_freeze] task 4 summary
+::   scoring_method = voita
+::   selection      = michel_current
+::   freeze_ratio   = 0.015  |  freeze_subset = 0.2
+::   new frozen     = +2 heads  |  total frozen = 8/144 (5.6%)
+::   newly frozen heads : L10H3, L11H8
+::   top-5 by cum. score: L0H0=3.3232, L1H3=2.2324, L8H8=2.0933, L10H3=2.0779, L2H6=2.0219
+:: Refine head:
+epoch [10/20]: loss=0.0251, acc_top1=100.00%
+epoch [20/20]: loss=0.0242, acc_top1=100.00%
+Task [ 4/10]:: Training time = 00:11:58
+****************************************************************************************** Start Evaluation ******************************************************************************************
+Task [4/10]:: Eval [1/4]: eval_time=1.8s, acc_task_inc=96.40%, acc_class_inc=57.70%
+Task [4/10]:: Eval [2/4]: eval_time=1.9s, acc_task_inc=97.40%, acc_class_inc=71.20%
+Task [4/10]:: Eval [3/4]: eval_time=1.9s, acc_task_inc=96.70%, acc_class_inc=89.10%
+Task [4/10]:: Eval [4/4]: eval_time=1.9s, acc_task_inc=98.90%, acc_class_inc=98.80%
+========================================================================================== End of task [4/10] ==========================================================================================
+:: ** Results of task [4]: [ diag_task_avg_acc=99.00% | task_inc_last_acc=97.35% | task_inc_last_forg= 2.20% | class_inc_last_acc=79.20% | class_inc_last_forg=26.20% ] **
+:: ** Time so far: 00:47:06 **
+########################################################################################## Task: [5/10] ##########################################################################################
+****************************************************************************************** Start Training ******************************************************************************************
+:: Training:
+Task [ 5/10] Epoch [1/5]:: lr=1.000e-02, ce_loss=0.2826, loss=0.2826, data_time=2.860, batch_time=125.632, acc_top1=91.09%, acc_top5=95.49%
+Task [ 5/10] Epoch [2/5]:: lr=1.000e-02, ce_loss=0.2004, loss=0.2004, data_time=1.732, batch_time=124.684, acc_top1=93.28%, acc_top5=96.52%
+Task [ 5/10] Epoch [3/5]:: lr=1.000e-02, ce_loss=0.1781, loss=0.1781, data_time=2.045, batch_time=125.198, acc_top1=93.97%, acc_top5=96.98%
+Task [ 5/10] Epoch [4/5]:: lr=1.000e-02, ce_loss=0.1707, loss=0.1707, data_time=2.088, batch_time=125.003, acc_top1=94.28%, acc_top5=96.96%
+Task [ 5/10] Epoch [5/5]:: lr=1.000e-03, ce_loss=0.1447, loss=0.1447, data_time=1.816, batch_time=124.802, acc_top1=95.15%, acc_top5=97.38%
+***** Calculating head importance *****
+  Num examples = 50000
+  Batch size   = 100
+  Num steps    = 100
+:: [head_freeze] task 5 summary
+::   scoring_method = voita
+::   selection      = michel_current
+::   freeze_ratio   = 0.015  |  freeze_subset = 0.2
+::   new frozen     = +2 heads  |  total frozen = 10/144 (6.9%)
+::   newly frozen heads : L4H4, L11H9
+::   top-5 by cum. score: L0H0=4.1558, L1H3=2.8010, L8H8=2.6177, L10H3=2.5763, L2H6=2.5184
+:: Refine head:
+epoch [10/20]: loss=0.0427, acc_top1=99.89%
+epoch [20/20]: loss=0.0405, acc_top1=99.93%
+Task [ 5/10]:: Training time = 00:12:14
+****************************************************************************************** Start Evaluation ******************************************************************************************
+Task [5/10]:: Eval [1/5]: eval_time=1.9s, acc_task_inc=95.60%, acc_class_inc=49.10%
+Task [5/10]:: Eval [2/5]: eval_time=1.9s, acc_task_inc=97.00%, acc_class_inc=67.10%
+Task [5/10]:: Eval [3/5]: eval_time=1.9s, acc_task_inc=95.90%, acc_class_inc=76.90%
+Task [5/10]:: Eval [4/5]: eval_time=1.8s, acc_task_inc=96.40%, acc_class_inc=85.50%
+Task [5/10]:: Eval [5/5]: eval_time=1.8s, acc_task_inc=99.30%, acc_class_inc=97.70%
+========================================================================================== End of task [5/10] ==========================================================================================
+:: ** Results of task [5]: [ diag_task_avg_acc=99.06% | task_inc_last_acc=96.84% | task_inc_last_forg= 2.78% | class_inc_last_acc=75.26% | class_inc_last_forg=29.20% ] **
+:: ** Time so far: 00:59:30 **
+########################################################################################## Task: [6/10] ##########################################################################################
+****************************************************************************************** Start Training ******************************************************************************************
+:: Training:
+Task [ 6/10] Epoch [1/5]:: lr=1.000e-02, ce_loss=0.2943, loss=0.2943, data_time=1.414, batch_time=124.141, acc_top1=90.16%, acc_top5=95.75%
+Task [ 6/10] Epoch [2/5]:: lr=1.000e-02, ce_loss=0.2003, loss=0.2003, data_time=1.911, batch_time=124.907, acc_top1=92.95%, acc_top5=96.96%
+Task [ 6/10] Epoch [3/5]:: lr=1.000e-02, ce_loss=0.1804, loss=0.1804, data_time=2.076, batch_time=125.109, acc_top1=93.72%, acc_top5=97.15%
+Task [ 6/10] Epoch [4/5]:: lr=1.000e-02, ce_loss=0.1689, loss=0.1689, data_time=1.875, batch_time=124.731, acc_top1=94.15%, acc_top5=97.30%
+Task [ 6/10] Epoch [5/5]:: lr=1.000e-03, ce_loss=0.1491, loss=0.1491, data_time=2.086, batch_time=125.110, acc_top1=94.79%, acc_top5=97.49%
+***** Calculating head importance *****
+  Num examples = 50000
+  Batch size   = 100
+  Num steps    = 100
+:: [head_freeze] task 6 summary
+::   scoring_method = voita
+::   selection      = michel_current
+::   freeze_ratio   = 0.015  |  freeze_subset = 0.2
+::   new frozen     = +2 heads  |  total frozen = 12/144 (8.3%)
+::   newly frozen heads : L2H8, L11H0
+::   top-5 by cum. score: L0H0=5.0049, L1H3=3.3787, L10H3=3.2016, L8H8=3.1361, L2H6=3.0104
+:: Refine head:
+epoch [10/20]: loss=0.0491, acc_top1=99.92%
+epoch [20/20]: loss=0.0462, acc_top1=99.94%
+Task [ 6/10]:: Training time = 00:12:24
+****************************************************************************************** Start Evaluation ******************************************************************************************
+Task [6/10]:: Eval [1/6]: eval_time=1.8s, acc_task_inc=94.20%, acc_class_inc=38.80%
+Task [6/10]:: Eval [2/6]: eval_time=1.8s, acc_task_inc=96.40%, acc_class_inc=63.80%
+Task [6/10]:: Eval [3/6]: eval_time=1.8s, acc_task_inc=94.30%, acc_class_inc=75.40%
+Task [6/10]:: Eval [4/6]: eval_time=1.9s, acc_task_inc=94.20%, acc_class_inc=65.30%
+Task [6/10]:: Eval [5/6]: eval_time=1.9s, acc_task_inc=96.50%, acc_class_inc=81.60%
+Task [6/10]:: Eval [6/6]: eval_time=1.8s, acc_task_inc=97.20%, acc_class_inc=96.70%
+========================================================================================== End of task [6/10] ==========================================================================================
+:: ** Results of task [6]: [ diag_task_avg_acc=98.75% | task_inc_last_acc=95.47% | task_inc_last_forg= 3.94% | class_inc_last_acc=70.27% | class_inc_last_forg=33.64% ] **
+:: ** Time so far: 01:12:05 **
+########################################################################################## Task: [7/10] ##########################################################################################
+****************************************************************************************** Start Training ******************************************************************************************
+:: Training:
+Task [ 7/10] Epoch [1/5]:: lr=1.000e-02, ce_loss=0.3122, loss=0.3122, data_time=1.916, batch_time=124.446, acc_top1=89.67%, acc_top5=94.83%
+Task [ 7/10] Epoch [2/5]:: lr=1.000e-02, ce_loss=0.2137, loss=0.2137, data_time=1.775, batch_time=124.776, acc_top1=92.71%, acc_top5=96.27%
+Task [ 7/10] Epoch [3/5]:: lr=1.000e-02, ce_loss=0.1902, loss=0.1902, data_time=1.959, batch_time=124.923, acc_top1=93.41%, acc_top5=96.71%
+Task [ 7/10] Epoch [4/5]:: lr=1.000e-02, ce_loss=0.1792, loss=0.1792, data_time=2.119, batch_time=125.023, acc_top1=93.86%, acc_top5=96.95%
+Task [ 7/10] Epoch [5/5]:: lr=1.000e-03, ce_loss=0.1560, loss=0.1560, data_time=2.294, batch_time=125.015, acc_top1=94.56%, acc_top5=97.15%
+***** Calculating head importance *****
+  Num examples = 50000
+  Batch size   = 100
+  Num steps    = 100
+:: [head_freeze] task 7 summary
+::   scoring_method = voita
+::   selection      = michel_current
+::   freeze_ratio   = 0.015  |  freeze_subset = 0.2
+::   new frozen     = +2 heads  |  total frozen = 14/144 (9.7%)
+::   newly frozen heads : L1H6, L9H9
+::   top-5 by cum. score: L0H0=5.8446, L1H3=3.9667, L10H3=3.7078, L8H8=3.6340, L2H6=3.4809
+:: Refine head:
+epoch [10/20]: loss=0.0518, acc_top1=99.81%
+epoch [20/20]: loss=0.0476, acc_top1=99.92%
+Task [ 7/10]:: Training time = 00:12:35
+****************************************************************************************** Start Evaluation ******************************************************************************************
+Task [7/10]:: Eval [1/7]: eval_time=1.9s, acc_task_inc=95.70%, acc_class_inc=46.80%
+Task [7/10]:: Eval [2/7]: eval_time=1.8s, acc_task_inc=96.30%, acc_class_inc=65.50%
+Task [7/10]:: Eval [3/7]: eval_time=1.9s, acc_task_inc=95.80%, acc_class_inc=72.30%
+Task [7/10]:: Eval [4/7]: eval_time=1.9s, acc_task_inc=95.50%, acc_class_inc=69.90%
+Task [7/10]:: Eval [5/7]: eval_time=1.9s, acc_task_inc=96.80%, acc_class_inc=80.20%
+Task [7/10]:: Eval [6/7]: eval_time=1.8s, acc_task_inc=96.40%, acc_class_inc=88.50%
+Task [7/10]:: Eval [7/7]: eval_time=1.8s, acc_task_inc=97.20%, acc_class_inc=96.50%
+========================================================================================== End of task [7/10] ==========================================================================================
+:: ** Results of task [7]: [ diag_task_avg_acc=98.53% | task_inc_last_acc=96.24% | task_inc_last_forg= 2.67% | class_inc_last_acc=74.24% | class_inc_last_forg=27.77% ] **
+:: ** Time so far: 01:24:53 **
+########################################################################################## Task: [8/10] ##########################################################################################
+****************************************************************************************** Start Training ******************************************************************************************
+:: Training:
+Task [ 8/10] Epoch [1/5]:: lr=1.000e-02, ce_loss=0.3014, loss=0.3014, data_time=1.656, batch_time=124.526, acc_top1=90.33%, acc_top5=94.79%
+Task [ 8/10] Epoch [2/5]:: lr=1.000e-02, ce_loss=0.2147, loss=0.2147, data_time=2.046, batch_time=125.473, acc_top1=92.78%, acc_top5=96.10%
+Task [ 8/10] Epoch [3/5]:: lr=1.000e-02, ce_loss=0.1913, loss=0.1913, data_time=2.164, batch_time=125.641, acc_top1=93.56%, acc_top5=96.50%
+Task [ 8/10] Epoch [4/5]:: lr=1.000e-02, ce_loss=0.1850, loss=0.1850, data_time=2.342, batch_time=125.713, acc_top1=93.77%, acc_top5=96.64%
+Task [ 8/10] Epoch [5/5]:: lr=1.000e-03, ce_loss=0.1581, loss=0.1581, data_time=1.967, batch_time=125.826, acc_top1=94.59%, acc_top5=97.03%
+***** Calculating head importance *****
+  Num examples = 50000
+  Batch size   = 100
+  Num steps    = 100
+:: [head_freeze] task 8 summary
+::   scoring_method = voita
+::   selection      = michel_current
+::   freeze_ratio   = 0.015  |  freeze_subset = 0.2
+::   new frozen     = +2 heads  |  total frozen = 16/144 (11.1%)
+::   newly frozen heads : L3H1, L3H6
+::   top-5 by cum. score: L0H0=6.6751, L1H3=4.5462, L10H3=4.2317, L8H8=4.1411, L2H6=3.9772
+:: Refine head:
+epoch [10/20]: loss=0.0593, acc_top1=99.75%
+epoch [20/20]: loss=0.0543, acc_top1=99.89%
+Task [ 8/10]:: Training time = 00:12:54
+****************************************************************************************** Start Evaluation ******************************************************************************************
+Task [8/10]:: Eval [1/8]: eval_time=1.9s, acc_task_inc=93.40%, acc_class_inc=40.00%
+Task [8/10]:: Eval [2/8]: eval_time=1.9s, acc_task_inc=96.60%, acc_class_inc=55.20%
+Task [8/10]:: Eval [3/8]: eval_time=1.9s, acc_task_inc=94.20%, acc_class_inc=62.20%
+Task [8/10]:: Eval [4/8]: eval_time=1.9s, acc_task_inc=94.30%, acc_class_inc=56.90%
+Task [8/10]:: Eval [5/8]: eval_time=1.9s, acc_task_inc=96.20%, acc_class_inc=73.20%
+Task [8/10]:: Eval [6/8]: eval_time=1.9s, acc_task_inc=95.00%, acc_class_inc=70.60%
+Task [8/10]:: Eval [7/8]: eval_time=1.9s, acc_task_inc=95.70%, acc_class_inc=79.20%
+Task [8/10]:: Eval [8/8]: eval_time=1.9s, acc_task_inc=98.00%, acc_class_inc=97.60%
+========================================================================================== End of task [8/10] ==========================================================================================
+:: ** Results of task [8]: [ diag_task_avg_acc=98.46% | task_inc_last_acc=95.43% | task_inc_last_forg= 3.47% | class_inc_last_acc=66.86% | class_inc_last_forg=35.57% ] **
+:: ** Time so far: 01:38:03 **
+########################################################################################## Task: [9/10] ##########################################################################################
+****************************************************************************************** Start Training ******************************************************************************************
+:: Training:
+Task [ 9/10] Epoch [1/5]:: lr=1.000e-02, ce_loss=0.2714, loss=0.2714, data_time=1.892, batch_time=125.537, acc_top1=91.24%, acc_top5=95.42%
+Task [ 9/10] Epoch [2/5]:: lr=1.000e-02, ce_loss=0.1833, loss=0.1833, data_time=1.844, batch_time=125.796, acc_top1=93.90%, acc_top5=96.79%
+Task [ 9/10] Epoch [3/5]:: lr=1.000e-02, ce_loss=0.1688, loss=0.1688, data_time=1.524, batch_time=125.582, acc_top1=94.27%, acc_top5=97.04%
+Task [ 9/10] Epoch [4/5]:: lr=1.000e-02, ce_loss=0.1593, loss=0.1593, data_time=2.001, batch_time=126.013, acc_top1=94.56%, acc_top5=97.23%
+Task [ 9/10] Epoch [5/5]:: lr=1.000e-03, ce_loss=0.1395, loss=0.1395, data_time=1.745, batch_time=125.829, acc_top1=95.25%, acc_top5=97.32%
+***** Calculating head importance *****
+  Num examples = 50000
+  Batch size   = 100
+  Num steps    = 100
+:: [head_freeze] task 9 summary
+::   scoring_method = voita
+::   selection      = michel_current
+::   freeze_ratio   = 0.015  |  freeze_subset = 0.2
+::   new frozen     = +2 heads  |  total frozen = 18/144 (12.5%)
+::   newly frozen heads : L2H3, L11H10
+::   top-5 by cum. score: L0H0=7.5455, L1H3=5.1147, L10H3=4.6936, L8H8=4.6852, L2H6=4.4830
+:: Refine head:
+epoch [10/20]: loss=0.0604, acc_top1=99.76%
+epoch [20/20]: loss=0.0554, acc_top1=99.90%
+Task [ 9/10]:: Training time = 00:13:07
+****************************************************************************************** Start Evaluation ******************************************************************************************
+Task [9/10]:: Eval [1/9]: eval_time=1.9s, acc_task_inc=93.00%, acc_class_inc=36.80%
+Task [9/10]:: Eval [2/9]: eval_time=1.9s, acc_task_inc=95.90%, acc_class_inc=55.80%
+Task [9/10]:: Eval [3/9]: eval_time=1.9s, acc_task_inc=95.00%, acc_class_inc=63.10%
+Task [9/10]:: Eval [4/9]: eval_time=1.9s, acc_task_inc=94.40%, acc_class_inc=49.90%
+Task [9/10]:: Eval [5/9]: eval_time=1.9s, acc_task_inc=93.50%, acc_class_inc=60.90%
+Task [9/10]:: Eval [6/9]: eval_time=1.9s, acc_task_inc=93.30%, acc_class_inc=65.70%
+Task [9/10]:: Eval [7/9]: eval_time=1.9s, acc_task_inc=93.60%, acc_class_inc=73.10%
+Task [9/10]:: Eval [8/9]: eval_time=1.9s, acc_task_inc=96.60%, acc_class_inc=89.00%
+Task [9/10]:: Eval [9/9]: eval_time=1.9s, acc_task_inc=99.50%, acc_class_inc=98.80%
+========================================================================================== End of task [9/10] ==========================================================================================
+:: ** Results of task [9]: [ diag_task_avg_acc=98.58% | task_inc_last_acc=94.98% | task_inc_last_forg= 4.05% | class_inc_last_acc=65.90% | class_inc_last_forg=36.20% ] **
+:: ** Time so far: 01:51:27 **
+########################################################################################## Task: [10/10] ##########################################################################################
+****************************************************************************************** Start Training ******************************************************************************************
+:: Training:
+Task [10/10] Epoch [1/5]:: lr=1.000e-02, ce_loss=0.2391, loss=0.2391, data_time=2.006, batch_time=125.629, acc_top1=92.54%, acc_top5=95.95%
+Task [10/10] Epoch [2/5]:: lr=1.000e-02, ce_loss=0.1642, loss=0.1642, data_time=1.783, batch_time=125.816, acc_top1=94.52%, acc_top5=97.15%
+Task [10/10] Epoch [3/5]:: lr=1.000e-02, ce_loss=0.1519, loss=0.1519, data_time=2.047, batch_time=126.080, acc_top1=94.98%, acc_top5=97.25%
+Task [10/10] Epoch [4/5]:: lr=1.000e-02, ce_loss=0.1457, loss=0.1457, data_time=2.018, batch_time=125.987, acc_top1=95.16%, acc_top5=97.36%
+Task [10/10] Epoch [5/5]:: lr=1.000e-03, ce_loss=0.1267, loss=0.1267, data_time=1.843, batch_time=125.907, acc_top1=95.72%, acc_top5=97.65%
+***** Calculating head importance *****
+  Num examples = 50000
+  Batch size   = 100
+  Num steps    = 100
+:: [head_freeze] task 10 summary
+::   scoring_method = voita
+::   selection      = michel_current
+::   freeze_ratio   = 0.015  |  freeze_subset = 0.2
+::   new frozen     = +2 heads  |  total frozen = 20/144 (13.9%)
+::   newly frozen heads : L4H9, L5H1
+::   top-5 by cum. score: L0H0=8.3904, L1H3=5.6876, L10H3=5.2284, L8H8=5.2137, L2H6=4.9761
+:: Refine head:
+epoch [10/20]: loss=0.0877, acc_top1=99.55%
+epoch [20/20]: loss=0.0803, acc_top1=99.75%
+Task [10/10]:: Training time = 00:13:21
+****************************************************************************************** Start Evaluation ******************************************************************************************
+Task [10/10]:: Eval [ 1/10]: eval_time=1.9s, acc_task_inc=94.10%, acc_class_inc=32.30%
+Task [10/10]:: Eval [ 2/10]: eval_time=1.9s, acc_task_inc=94.80%, acc_class_inc=46.60%
+Task [10/10]:: Eval [ 3/10]: eval_time=1.9s, acc_task_inc=95.20%, acc_class_inc=61.70%
+Task [10/10]:: Eval [ 4/10]: eval_time=1.9s, acc_task_inc=92.90%, acc_class_inc=39.70%
+Task [10/10]:: Eval [ 5/10]: eval_time=1.9s, acc_task_inc=89.70%, acc_class_inc=48.40%
+Task [10/10]:: Eval [ 6/10]: eval_time=1.9s, acc_task_inc=89.10%, acc_class_inc=51.00%
+Task [10/10]:: Eval [ 7/10]: eval_time=1.9s, acc_task_inc=93.10%, acc_class_inc=59.50%
+Task [10/10]:: Eval [ 8/10]: eval_time=1.9s, acc_task_inc=95.50%, acc_class_inc=72.80%
+Task [10/10]:: Eval [ 9/10]: eval_time=1.9s, acc_task_inc=95.90%, acc_class_inc=85.70%
+Task [10/10]:: Eval [10/10]: eval_time=1.9s, acc_task_inc=99.50%, acc_class_inc=97.70%
+========================================================================================== End of task [10/10] ==========================================================================================
+:: ** Results of task [10]: [ diag_task_avg_acc=98.67% | task_inc_last_acc=93.98% | task_inc_last_forg= 5.21% | class_inc_last_acc=59.54% | class_inc_last_forg=42.78% ] **
+:: ** Time so far: 02:05:07 **
