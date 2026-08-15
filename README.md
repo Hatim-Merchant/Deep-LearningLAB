@@ -161,3 +161,9 @@ utils/
 tools/                             # dataset-splitting scripts and class-name lists
 results/                           # experiment outputs (config.json, metrics.json, logs)
 ```
+
+## Contributors
+ 
+- Alexandria ([Alex198464](https://github.com/Alex198464))
+- Hatim Merchant ([Hatim-Merchant](https://github.com/Hatim-Merchant), st192505@uni-stuttgart.de)
+- Lisa ([Lisa807649](https://github.com/Lisa807649))
