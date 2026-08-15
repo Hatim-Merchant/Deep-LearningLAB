@@ -81,10 +81,14 @@ def get_args():
     parser.add_argument('--head_freeze', action='store_true', help='freeze the most-important heads for CL')
     parser.add_argument('--freeze_ratio', type=float, default=0.1, help='fraction of ALL heads frozen per task (cumulative)')
     parser.add_argument('--freeze_subset', type=float, default=0.2, help='fraction (<=1) or count of task samples for importance')
+    parser.add_argument('--scoring_method', type=str, default='michel', choices=('michel', 'voita'),
+                            help='how head importance scores are computed when --head_freeze is set: '
+                                '"michel" = Michel et al. |Att^T dL/dAtt|; '
+                                '"voita" = Voita et al. LRP-style |Att^T d(logit_top1)/dAtt|')
     parser.add_argument('--head_selection', type=str, default='michel', choices=('michel', 'michel_current', 'random'),
-                            help='how frozen heads are chosen when --head_freeze is set: '
-                                '"michel" = highest cumulative importance; '
-                                'michel_current" = highest importance for the just-finished task; '
+                            help='how frozen heads are chosen from the importance scores when --head_freeze is set: '
+                                '"michel" = highest cumulative importance across all tasks seen so far (global); '
+                                '"michel_current" = highest importance for the just-finished task (local); '
                                 '"random" = random subset of all 144 heads (importance ignored)')
 
     parser.add_argument('--weight_decay', type=float, default=5e-5)
@@ -207,6 +211,7 @@ def _save_chekpoint(GVM: GlobalVarsManager, taskid: int, model: VisionTransforme
 def _log_head_freeze_json(
     log_dir: str,
     taskid: int,
+    scoring_method: str,
     head_selection: str,
     freeze_ratio: float,
     freeze_subset: float,
@@ -225,6 +230,8 @@ def _log_head_freeze_json(
     JSON entry fields
     -----------------
     task                  : 1-based task index (for readability).
+    scoring_method        : --scoring_method hyperparameter ("michel" or "voita").
+    head_selection        : --head_selection hyperparameter ("michel", "michel_current" or "random").
     freeze_ratio          : --freeze_ratio hyperparameter.
     freeze_subset         : --freeze_subset hyperparameter.
     total_heads           : Total number of attention heads in the model
@@ -247,7 +254,8 @@ def _log_head_freeze_json(
     Args:
         log_dir               : Target directory. Empty string = no writing.
         taskid                : 0-based task index.
-        head_selection        : Head-selection strategy used ("michel" or "random").
+        scoring_method        : Scoring method used ("michel" or "voita").
+        head_selection        : Head-selection strategy used ("michel", "michel_current" or "random").
         freeze_ratio          : --freeze_ratio hyperparameter.
         freeze_subset         : --freeze_subset hyperparameter.
         new_frozen            : Set of newly frozen (layer, head) pairs.
@@ -293,7 +301,8 @@ def _log_head_freeze_json(
     # Build the entry for this task.
     entry = {
         "task":             taskid + 1,          # 1-based for readability
-        "head_selection":   head_selection,      # "michel" or "random"
+        "scoring_method":   scoring_method,      # "michel" or "voita"
+        "head_selection":   head_selection,      # "michel", "michel_current" or "random"
         "freeze_ratio":     freeze_ratio,
         "freeze_subset":    freeze_subset,
         "total_heads":      total_heads,
@@ -388,12 +397,13 @@ def train_one_task(GVM: GlobalVarsManager, taskid: int, task_classes: list[int],
         prev_frozen = GVM.cache_dict.setdefault('frozen_heads', set())
         GVM.cache_dict.setdefault('task_importance_scores', {})
 
-        # 1) compute I_h = E_x |Att_h(x)^T * dL/dAtt_h(x)| for this task
+        # 1) compute head importance scores for this task
         scores = calculate_head_importance(
             model, dataset, batch_size=args.batch_size, device='cuda',
             subset_size=args.freeze_subset,
             task_classes=None,          # labels already in [0, n_classes)
             disable_progress_bar=not args.show_bar,
+            scoring_method=args.scoring_method,
         )
         GVM.cache_dict['task_importance_scores'][taskid] = scores
 
@@ -424,6 +434,7 @@ def train_one_task(GVM: GlobalVarsManager, taskid: int, task_classes: list[int],
 
         print(
             f":: [head_freeze] task {taskid + 1} summary\n"
+            f"::   scoring_method = {args.scoring_method}\n"
             f"::   selection      = {args.head_selection}\n"
             f"::   freeze_ratio   = {args.freeze_ratio}  |  "
             f"freeze_subset = {args.freeze_subset}\n"
@@ -442,6 +453,7 @@ def train_one_task(GVM: GlobalVarsManager, taskid: int, task_classes: list[int],
         _log_head_freeze_json(
             log_dir=args.log_dir,
             taskid=taskid,
+            scoring_method=args.scoring_method,
             head_selection=args.head_selection,
             freeze_ratio=args.freeze_ratio,
             freeze_subset=args.freeze_subset,

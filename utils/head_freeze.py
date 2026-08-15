@@ -29,6 +29,13 @@
 #   build_head_freezing_mask(...)       -> None  (stores masks on attn modules)
 #   freeze_apply_grad_mask(...)         -> None  (per step, before optimizer.step)
 #   freeze_restore_weights(...)         -> None  (per step, after optimizer.step)
+#
+# Scoring methods:
+#   "michel" - Michel et al. (2019) gradient-based importance, |Att^T dL/dAtt|.
+#   "voita"  - Voita et al. (2019) LRP-style relevance, |Att^T d(logit_top1)/dAtt|.
+#              This is a gradient*input approximation of the layer-wise relevance
+#              propagation used in the paper "Analyzing Multi-Head Self-Attention:
+#              Specialized Heads Do the Heavy Lifting, the Rest Can Be Pruned".
 # =============================================================================
 
 from collections import defaultdict
@@ -58,16 +65,29 @@ def calculate_head_importance(
     task_classes: Optional[list] = None,
     verbose: bool = True,
     disable_progress_bar: bool = False,
+    scoring_method: str = "michel",
 ) -> ImportanceDict:
-    """Compute attention-head importance scores according to Michel et al. Section 4.1.
+    """Compute attention-head importance/relevance scores.
 
+    Supports two scoring methods, selected via ``scoring_method``:
 
-    Importance formula:
+    ``michel`` (Michel et al., 2019):
         I_h = E_x | Att_h(x)^T * dL(x) / dAtt_h(x) |
+        Uses the cross-entropy loss gradient. This is the original method used
+        by the AttentionRetentionCL project.
 
-    where Att_h(x) is the output of head h (context vector after softmax-weighted
-    value aggregation). This equals the absolute dot product between the head
-    output and its gradient, summed over tokens and averaged over samples.
+    ``voita`` (Voita et al., 2019):
+        R_h = E_x | Att_h(x)^T * d(logit_top1)(x) / dAtt_h(x) |
+        Uses the gradient of the model's top-1 predicted logit. This is a
+        gradient*input approximation of the layer-wise relevance propagation
+        (LRP) head importance used in the paper "Analyzing Multi-Head
+        Self-Attention: Specialized Heads Do the Heavy Lifting, the Rest Can
+        Be Pruned" (ACL 2019), adapted to the timm VisionTransformer.
+
+    In both cases Att_h(x) is the output of head h (context vector after
+    softmax-weighted value aggregation) and the score is the absolute dot
+    product between the head output and its backward signal, summed over tokens
+    and accumulated over samples.
 
     Implementation note:
         The timm Attention.forward stores Att_h(x) as `attn.out` with shape
@@ -85,22 +105,27 @@ def calculate_head_importance(
                                   current device.
         normalize_scores_by_layer: L2-normalise scores within each layer so that
                                   layers with different gradient magnitudes are
-                                  comparable (recommended by Michel et al.).
+                                  comparable (recommended by both papers).
         subset_size:              Fraction <=1 of the dataset to use, or an
                                   absolute integer count. Using a subset speeds
                                   up importance estimation at a small cost in
                                   accuracy.
         task_classes:             Optional list mapping local label indices to
-                                  global class indices. Pass None when the dataset
-                                  labels already match the model head (the normal
-                                  case in this codebase).
+                                  global class indices. Used only by the Michel
+                                  method; pass None when the dataset labels already
+                                  match the model head (the normal case).
         verbose:                  Print sample / step counts to stdout.
         disable_progress_bar:     Suppress the tqdm progress bar.
+        scoring_method:           "michel" or "voita".
 
     Returns:
         Dictionary mapping (layer_idx, head_idx) to a scalar importance score.
         Scores are non-negative; higher means more important.
     """
+    if scoring_method not in ("michel", "voita"):
+        raise ValueError(
+            f"Unknown scoring_method '{scoring_method}'. Use 'michel' or 'voita'."
+        )
     # Why Import GlobalVarsManager here? To avoid a circular dependency at module load time
     # (head_freeze <- utils.gvm, not the other way around).
     from utils.gvm import GlobalVarsManager
@@ -140,22 +165,30 @@ def calculate_head_importance(
 
     # Accumulate importance scores over all batches; shape [num_layers, num_heads].
     head_importance = torch.zeros(num_layers, num_heads, device=device)
-    # Use sum reduction so that the magnitude is consistent across batch sizes.
-    loss_fn = nn.CrossEntropyLoss(reduction="sum")
 
-    if task_classes is not None:
-        task_classes_tensor = torch.tensor(task_classes, device=device, dtype=torch.long)
+    if scoring_method == "michel":
+        # Use sum reduction so that the magnitude is consistent across batch sizes.
+        loss_fn = nn.CrossEntropyLoss(reduction="sum")
+        if task_classes is not None:
+            task_classes_tensor = torch.tensor(task_classes, device=device, dtype=torch.long)
 
     for batch in iterator:
         images, labels = (t.to(device) for t in batch)
         labels = labels.long()
 
-        if task_classes is not None:
-            labels = task_classes_tensor[labels]
-
-        logits = model(images)          # timm ViT: returns logits Tensor directly
-        loss = loss_fn(logits, labels)
-        loss.backward()
+        if scoring_method == "michel":
+            if task_classes is not None:
+                labels = task_classes_tensor[labels]
+            logits = model(images)          # timm ViT: returns logits Tensor directly
+            loss = loss_fn(logits, labels)
+            loss.backward()
+        else:  # scoring_method == "voita"
+            logits = model(images)
+            # Voita et al. use the relevance of each head to the top-1 predicted
+            # logit. We approximate this with gradient*input (LRP-0).
+            pred_classes = logits.argmax(dim=1)
+            selected_logits = logits[range(len(logits)), pred_classes]
+            selected_logits.sum().backward()
 
         for layer_idx, block in enumerate(blocks):
             attn_module = block.attn
@@ -167,7 +200,7 @@ def calculate_head_importance(
                     "GVM().training is True — verify the flag is set."
                 )
             ctx = attn_module.out           # [B, H, N, head_dim]: per-head context
-            grad_ctx = ctx.grad             # dL / d(ctx): same shape
+            grad_ctx = ctx.grad             # backward signal w.r.t. ctx: same shape
 
             if grad_ctx is None:
                 raise RuntimeError(
@@ -180,7 +213,7 @@ def calculate_head_importance(
                     f"attn.out must be 4-D [B, H, N, head_dim], got {tuple(ctx.shape)}."
                 )
 
-            # Compute |Att_h^T * dL/dAtt_h| per head, summed over batch and tokens.
+            # Compute |Att_h^T * backward_signal| per head, summed over batch and tokens.
             # einsum 'bhld,bhld->bhl' = element-wise product, then sum over head_dim.
             dot = torch.einsum("bhld,bhld->bhl", grad_ctx.float(), ctx.float())
             head_importance[layer_idx] += dot.abs().sum(dim=(0, 2)).detach()
