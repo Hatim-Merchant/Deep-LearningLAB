@@ -6,5 +6,6 @@ mkdir -p results/false-random-01 && \python train_eval.py  \
       --freeze_ratio 0.1   \
         --freeze_subset 0.2   \
         --shuffle_classes false \
+        --scoring_method voita   \
         --head_selection random    \
          --log_dir ./results/false-random-01    2>&1 | tee results/false-random-01/false-random-01.txt

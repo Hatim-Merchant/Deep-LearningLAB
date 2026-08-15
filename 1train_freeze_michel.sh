@@ -6,5 +6,6 @@ mkdir -p results/false-michel-01 && \python train_eval.py  \
       --freeze_ratio 0.1   \
         --freeze_subset 0.2   \
         --shuffle_classes false \
+        --scoring_method voita   \
         --head_selection michel    \
          --log_dir ./results/false-michel-01    2>&1 | tee results/false-michel-01/false-michel-01.txt
