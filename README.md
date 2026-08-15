@@ -5,6 +5,36 @@ This project studies **catastrophic forgetting** in a Vision Transformer (ViT) t
 
 The base ViT implementation (`vit.py`, `train.py`, `data.py`, `utils.py`) is built on top of [tintn/vision-transformer-from-scratch](https://github.com/tintn/vision-transformer-from-scratch). The continual learning pipeline and attention head freezing mechanism (`continual_learning.py`) are extensions on top of this original codebase. The head-importance measure is based on https://github.com/pmichel31415/pytorch-pretrained-BERT/tree/paul/examples.
 
+## Who is this branch for?
+
+This branch is intended for users who want to **demonstrate or reproduce continual learning experiments with a Vision Transformer (ViT) in a small, lightweight setting**.
+
+There are two main use cases:
+
+### 1. Demonstrating catastrophic forgetting
+
+If your goal is to **demonstrate and study catastrophic forgetting** without any mitigation method, use our baseline:
+
+```bash
+bash no_freezing.sh
+```
+
+This provides the continual learning baseline by sequentially training the ViT on the CIFAR-10 task splits without freezing any attention heads.
+
+### 2. Reproducing attention head freezing
+
+If your goal is to **reproduce our attention head freezing experiment**, use:
+
+```bash
+bash freeze.sh
+```
+
+This extends the baseline with attention head freezing based on **[Michel et al.'s attention head importance scoring](https://github.com/pmichel31415/pytorch-pretrained-BERT/tree/paul)**. The most important attention heads are identified after each task and frozen before training on the next task.
+
+The experiment is designed as a **small-scale, lightweight setting that does not require a GPU**, making it suitable for reproducing the basic effect of attention head freezing without the computational requirements of larger Vision Transformer experiments.
+
+This setup can also be used as a framework for **implementing and evaluating alternative attention-head importance or freezing methods**.
+
 ## Overview
 
 The continual learning experiment (`continual_learning.py`) works as follows:
@@ -56,47 +86,14 @@ pip install -r requirements.txt
 
 ## Usage
 
-### 4. Run the baseline (no freezing)
+The main entry point for the continual learning experiments is `continual_learning.py`.
 
-Trains sequentially on all tasks without freezing any attention heads. Adjust parameters as needed.
-
-```bash
-bash no_freezing.sh
-```
-
-This runs:
+To see all available options:
 
 ```bash
-python ./continual_learning.py \
-    --pretrained-dir "./experiments/vit_pretrained_T1and2_cifar10_60epochs" \
-    --exp-name "no_freezing" \
-    --epochs-per-task 30 \
-    --batch-size 128 \
-    --lr 0.001 \
-    --save-dir "./experiments"
+python continual_learning.py --help
 ```
 
-### 5. Run with attention head freezing
-
-Trains sequentially with attention head freezing enabled after each task. Adjust parameters as needed.
-
-```bash
-bash freeze.sh
-```
-
-This runs:
-
-```bash
-python ./continual_learning.py \
-    --pretrained-dir "./experiments/vit_pretrained_T1and2_cifar10_60epochs" \
-    --exp-name "run1" \
-    --epochs-per-task 30 \
-    --batch-size 128 \
-    --lr 0.001 \
-    --save-dir "./experiments" \
-    --freeze-heads \
-    --freeze-ratio 0.2
-```
 
 ### Available CLI arguments (`continual_learning.py`)
 
@@ -143,23 +140,24 @@ We also added a JSON file showing the importance scores of the attention heads f
 ## Project layout
 
 ```
-requirements.txt        # Project dependencies
-train.py                # Base ViT training entry-point
-continual_learning.py   # Continual learning + attention head freezing entry-point
-no_freezing.sh           # Baseline run script (no freezing)
-freeze.sh                # Run script with attention head freezing enabled
-vit.py                   # ViT model implementation (ViTForClassfication)
-data.py                  # Dataset loading and per-task class filtering (SubsetByClass)
-utils.py                 # Checkpointing and helper utilities
-plot_metrics.py           # Plotting for base training metrics
-plot_cl_metrics.py         # Plotting for continual learning metrics/forgetting
-inspect.ipynb            # Pre-existing Notebook for model/attention inspection
-vision_transformers.ipynb # ViT walkthrough notebook
-experiments/              # Saved experiment runs (models, configs, metrics)
-CL/                        # plots to demonstrate catastrophic forgetting
-CL_ViT_60_30Epochs/        # Example continual learning run to demonstrate catastrophic forgetting (config, metrics, checkpoint)
-ViT_60_Epochs/             # Base model checkpoint (60 epochs)
-ViT_100_Epochs/            # Base model checkpoint (100 epochs)
-assets/                    # Pre-existing result images from the base codebase (metrics.png, attention.png)
-plots_performance_vit/     # Base training performance plots
+requirements.txt              # Project dependencies
+train.py                      # Base ViT training entry-point
+continual_learning.py         # Continual learning + attention head freezing entry-point
+no_freezing.sh                # Baseline run script (no freezing)
+freeze.sh                     # Run script with attention head freezing enabled
+vit.py                        # ViT model implementation (ViTForClassfication)
+data.py                       # Dataset loading and per-task class filtering (SubsetByClass)
+utils.py                      # Checkpointing and helper utilities
+plot_metrics.py               # Plotting for base training metrics
+plot_cl_metrics.py            # Plotting for continual learning metrics/forgetting
+inspect.ipynb                 # Pre-existing Notebook for model/attention inspection
+vision_transformers.ipynb     # ViT walkthrough notebook
+experiments/                  # Saved experiment runs (models, configs, metrics)
+CL/                           # plots to demonstrate catastrophic forgetting
+CL_ViT_60_30Epochs/           # Example continual learning to demonstrate catastrophic forgetting on CIFAR-10 (config, metrics, trained model)
+                                (trained on the first 5 classes for 60 epochs, then on the remaining 5 classes for 30 epochs)
+ViT_60_Epochs/                # ViT trained on the first five classes of CIFAR-10 for 60 epochs (config, metrics, trained model)
+ViT_100_Epochs/               # ViT trained on the first five classes of CIFAR-10 for 100 epochs (config, metrics, trained model)
+assets/                       # Pre-existing result images from the base codebase (metrics.png, attention.png)
+plots_performance_vit/        # Base training performance plots
 ```
