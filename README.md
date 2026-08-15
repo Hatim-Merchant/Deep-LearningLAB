@@ -1,6 +1,6 @@
 <div align="center">
 
-# Continual Learning with Attention Head Freezing (ViT / CIFAR-10)
+# Continual Learning with Attention Head Freezing
 
 A class-incremental continual learning framework built on Vision Transformers, using attention-head importance scoring to selectively freeze heads and retain previously learned knowledge.
 
